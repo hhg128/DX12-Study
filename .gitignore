@@ -36,6 +36,7 @@
 *.log
 *.opendb
 *.idb
+*.VC.db
 Debug/
 Release/
 .vs/
