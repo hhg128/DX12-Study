@@ -36,3 +36,7 @@
 *.log
 *.opendb
 *.idb
+Debug/
+Release/
+.vs/
+x64/
