@@ -30,13 +30,16 @@
 *.app
 
 #etc
+*.VC.db
 *.tlog
 *.ilk
 *.sdf
 *.log
 *.opendb
 *.idb
-*.VC.db
+
+
+#Directory
 Debug/
 Release/
 .vs/
