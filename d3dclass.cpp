@@ -388,8 +388,8 @@ bool D3DClass::CreateDevice()
 	hr = D3D12CreateDevice(NULL, featureLevel, __uuidof(ID3D12Device), (void**)&m_device);
 	if (FAILED(hr))
 	{
-		MessageBox(nullptr, L"Could not create a DirectX 12.1 device.  The default video card does not support DirectX 12.1.", L"DirectX Device Failure", MB_OK);
-		
+		MessageBox(nullptr, L"Could not create a DirectX 12 device. I will try to make the warp device .", L"DirectX Device Failure", MB_OK);
+
 		ComPtr<IDXGIAdapter> warpAdapter;
 		m_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
 
@@ -399,8 +399,6 @@ bool D3DClass::CreateDevice()
 			MessageBox(nullptr, L"Could not create a DirectX 12.1 device.  The default video card does not support DirectX 11.0.", L"DirectX Device Failure", MB_OK);
 			return false;
 		}
-
-		return false;
 	}
 
 	return true;
