@@ -10,11 +10,11 @@ D3DClass::D3DClass()
 
 bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 {	
+	CreateFactory();
 	CreateDevice();
 
 	CreateCommandQueue();
-
-	CreateFactory();
+	
 	CreateSwapChain(screenHeight, screenWidth, hwnd);
 
 	CreateRenderTargetViewDescriptorHeap();
@@ -389,6 +389,17 @@ bool D3DClass::CreateDevice()
 	if (FAILED(hr))
 	{
 		MessageBox(nullptr, L"Could not create a DirectX 12.1 device.  The default video card does not support DirectX 12.1.", L"DirectX Device Failure", MB_OK);
+		
+		ComPtr<IDXGIAdapter> warpAdapter;
+		m_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
+
+		hr = D3D12CreateDevice( warpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_device));
+		if (FAILED(hr))
+		{
+			MessageBox(nullptr, L"Could not create a DirectX 12.1 device.  The default video card does not support DirectX 11.0.", L"DirectX Device Failure", MB_OK);
+			return false;
+		}
+
 		return false;
 	}
 
