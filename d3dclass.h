@@ -83,8 +83,6 @@ public:
 	bool BuildShader();
 	bool BuildInputLayout();
 	bool BuildRootSignatures();
-	bool BuildDescriptorHeaps();
-	bool BuildConstantBuffers();
 	bool BuildGeometry();
 	bool BuildPSO();
 
@@ -98,6 +96,9 @@ public:
 	
 	bool CreateRenderTargetViewDescriptorHeap();
 	bool CreateRenderTargetView();
+
+	bool CreateDepthStencilViewDescriptorHeap();
+	bool CreateDepthStencilView();
 	
 	bool CreateCommandAllocator();
 	bool CreateCommandList();
@@ -179,6 +180,7 @@ private:
 	ComPtr<ID3D12DescriptorHeap>	m_DepthStencilViewHeap;
 	ComPtr<ID3D12Resource>			m_DepthStencilBuffer;
 
+	int m_nWindowWidth, m_nWindowHeight;
 
 	int rtvDescriptorSize;
 };

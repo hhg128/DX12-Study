@@ -10,6 +10,9 @@ D3DClass::D3DClass()
 
 bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 {	
+	m_nWindowWidth = screenWidth;
+	m_nWindowHeight = screenHeight;
+
 	CreateFactory();
 	CreateDevice();
 
@@ -19,6 +22,9 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 
 	CreateRenderTargetViewDescriptorHeap();
 	CreateRenderTargetView();
+
+	CreateDepthStencilViewDescriptorHeap();
+	CreateDepthStencilView();
 
 	BuildRootSignatures();
 
@@ -96,13 +102,15 @@ bool D3DClass::Render()
 	int renderTargetViewDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBufferIndex, renderTargetViewDescriptorSize);
 
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_DepthStencilViewHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Set the back buffer as the render target.
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, NULL);
+	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	
 	// Then set the color to clear the window to.
 	float color[4] = { 0.f, 0.f, 0.5f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, color, 0, NULL);
+	m_commandList->ClearDepthStencilView(m_DepthStencilViewHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	//////////////////////////////////////////////////////////////////////////
 	// something start
@@ -519,6 +527,62 @@ bool D3DClass::CreateRenderTargetView()
 		// we increment the rtv handle by the rtv descriptor size we got above
 		renderTargetViewHandle.Offset(1, renderTargetViewDescriptorSize);
 	}
+
+	return true;
+}
+
+bool D3DClass::CreateDepthStencilViewDescriptorHeap()
+{
+	HRESULT result;
+
+	// Initialize the render target view heap description for the two back buffers.
+	D3D12_DESCRIPTOR_HEAP_DESC depthStencilViewHeapDesc = {};
+
+	// Set the number of descriptors to two for our two back buffers.  Also set the heap type to render target views.
+	depthStencilViewHeapDesc.NumDescriptors = 1;
+	depthStencilViewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	depthStencilViewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+	// Create the render target view heap for the back buffers.
+	result = m_device->CreateDescriptorHeap(&depthStencilViewHeapDesc, IID_PPV_ARGS(&m_DepthStencilViewHeap));
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool D3DClass::CreateDepthStencilView()
+{
+	HRESULT result;
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+	depthStencilDesc.Format			= DXGI_FORMAT_D32_FLOAT;
+	depthStencilDesc.ViewDimension	= D3D12_DSV_DIMENSION_TEXTURE2D;
+	depthStencilDesc.Flags			= D3D12_DSV_FLAG_NONE;
+
+	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	depthOptimizedClearValue.Format					= DXGI_FORMAT_D32_FLOAT;
+	depthOptimizedClearValue.DepthStencil.Depth		= 1.0f;
+	depthOptimizedClearValue.DepthStencil.Stencil	= 0;
+
+	result = m_device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_nWindowWidth, m_nWindowHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthOptimizedClearValue,
+		IID_PPV_ARGS(&m_DepthStencilBuffer));
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	m_DepthStencilBuffer->SetName(L"Depth/Stencil Resource Heap");
+
+	m_device->CreateDepthStencilView(m_DepthStencilBuffer.Get(), &depthStencilDesc, m_DepthStencilViewHeap->GetCPUDescriptorHandleForHeapStart());
+
 
 	return true;
 }
