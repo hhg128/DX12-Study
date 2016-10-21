@@ -161,8 +161,6 @@ private:
 
 	ComPtr<ID3D12Resource>	mUploadCBUffer;
 
-	ComPtr<ID3D12PipelineState> mPSO = nullptr;
-
 	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 

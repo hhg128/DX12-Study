@@ -87,7 +87,7 @@ bool D3DClass::Render()
 	}
 
 	// Reset the command list, use empty pipeline state for now since there are no shaders and we are just clearing the screen.
-	result = m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), mPSO.Get());
+	result = m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), m_pipelineState.Get());
 	if(FAILED(result))
 	{
 		return false;
@@ -261,7 +261,7 @@ bool D3DClass::BuildPSO()
 	psoDesc.SampleDesc.Count = 1;
 	psoDesc.SampleDesc.Quality = 0;
 	
-	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO));
+	HRESULT hr = m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState));
 	if (FAILED(hr))
 	{
 		return false;
