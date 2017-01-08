@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fbxsdk.h>
+#include <string>
 
 class CResourceManager
 {
@@ -10,6 +11,8 @@ public:
 
 	void Initialize();
 	void Finalize();
+
+	void Load(const std::wstring fbxFileName);
 
 private:
 	FbxManager*		m_pSdkManager = nullptr;

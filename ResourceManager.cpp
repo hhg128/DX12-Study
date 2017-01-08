@@ -1,7 +1,6 @@
 #include "ResourceManager.h"
 
 
-
 CResourceManager::CResourceManager()
 {
 }
@@ -22,4 +21,9 @@ void CResourceManager::Finalize()
 
 	// 마지막으로 SdkManager를 정리하자.
 	if (m_pSdkManager)	m_pSdkManager->Destroy();
+}
+
+void CResourceManager::Load(const std::wstring fbxFileName)
+{
+
 }
