@@ -57,6 +57,8 @@ bool SystemClass::Initialize()
 	{
 		return false;
 	}
+
+	m_pResourceManager->Initialize();
 	
 	return true;
 }
@@ -64,19 +66,27 @@ bool SystemClass::Initialize()
 
 void SystemClass::Shutdown()
 {
+	// Fbx Sdk Á¤¸®
+	if (m_pResourceManager)
+	{
+		m_pResourceManager->Finalize();
+		delete m_pResourceManager;
+		m_pResourceManager = nullptr;
+	}
+
 	// Release the graphics object.
 	if(m_Graphics)
 	{
 		m_Graphics->Shutdown();
 		delete m_Graphics;
-		m_Graphics = 0;
+		m_Graphics = nullptr;
 	}
 
 	// Release the input object.
 	if(m_Input)
 	{
 		delete m_Input;
-		m_Input = 0;
+		m_Input = nullptr;
 	}
 
 	// Shutdown the window.

@@ -22,6 +22,7 @@
 ///////////////////////
 #include "inputclass.h"
 #include "graphicsclass.h"
+#include "ResourceManager.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +53,8 @@ private:
 
 	InputClass* m_Input;
 	GraphicsClass* m_Graphics;
+
+	CResourceManager* m_pResourceManager = nullptr;
 };
 
 
