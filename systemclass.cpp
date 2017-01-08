@@ -58,7 +58,9 @@ bool SystemClass::Initialize()
 		return false;
 	}
 
-	m_pResourceManager->Initialize();
+	m_pResourceManager = new CResourceManager;
+	if(m_pResourceManager)
+		m_pResourceManager->Initialize();
 	
 	return true;
 }
