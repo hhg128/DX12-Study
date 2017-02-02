@@ -254,7 +254,11 @@ bool D3DClass::BuildPSO()
 		reinterpret_cast<BYTE*>(mpsByteCode->GetBufferPointer()),
 		mpsByteCode->GetBufferSize()
 	};
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	
+	CD3DX12_RASTERIZER_DESC resterize_desc(D3D12_DEFAULT);
+	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	psoDesc.RasterizerState = resterize_desc;
+
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;
