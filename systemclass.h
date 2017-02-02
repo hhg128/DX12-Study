@@ -54,9 +54,11 @@ private:
 	InputClass* m_Input;
 	GraphicsClass* m_Graphics;
 
+public:
 	CResourceManager* m_pResourceManager = nullptr;
 };
 
+extern SystemClass* gSystem;
 
 /////////////////////////
 // FUNCTION PROTOTYPES //

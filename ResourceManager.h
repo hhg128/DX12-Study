@@ -12,7 +12,7 @@ public:
 	void Initialize();
 	void Finalize();
 
-	void Load(const std::wstring fbxFileName);
+	void Load(const std::string fbxFileName);
 
 private:
 	FbxManager*		m_pSdkManager = nullptr;

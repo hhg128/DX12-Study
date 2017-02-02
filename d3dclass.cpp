@@ -2,7 +2,8 @@
 // Filename: d3dclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
 #include "d3dclass.h"
-
+#include "systemclass.h"
+#include "ResourceManager.h"
 
 D3DClass::D3DClass()
 {
@@ -51,6 +52,8 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.right = screenWidth;
 	m_ScissorRect.bottom = screenHeight;
 	
+	gSystem->m_pResourceManager->Load("cube.fbx");
+
 	return true;
 }
 

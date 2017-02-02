@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include "systemclass.h"
 
+SystemClass* gSystem;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
 {
@@ -11,7 +12,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 	
 	
 	// Create the system object.
-	System = new SystemClass;
+	gSystem = System = new SystemClass;
 	if(!System)
 	{
 		return 0;

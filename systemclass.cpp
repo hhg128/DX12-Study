@@ -44,6 +44,10 @@ bool SystemClass::Initialize()
 	// Initialize the input object.
 	m_Input->Initialize();
 
+	m_pResourceManager = new CResourceManager;
+	if (m_pResourceManager)
+		m_pResourceManager->Initialize();
+
 	// Create the graphics object.  This object will handle rendering all the graphics for this application.
 	m_Graphics = new GraphicsClass;
 	if(!m_Graphics)
@@ -58,10 +62,6 @@ bool SystemClass::Initialize()
 		return false;
 	}
 
-	m_pResourceManager = new CResourceManager;
-	if(m_pResourceManager)
-		m_pResourceManager->Initialize();
-	
 	return true;
 }
 
