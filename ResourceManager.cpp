@@ -1,6 +1,5 @@
 #include "ResourceManager.h"
 
-
 CResourceManager::CResourceManager()
 {
 }
@@ -49,12 +48,36 @@ void CResourceManager::Load(const std::string fbxFileName)
 
 		if (pNode->GetGeometry())
 		{
-			FbxMesh* lMesh = pNode->GetMesh();
-			int lVertexCount = lMesh->GetControlPointsCount();
+			FbxMesh* pMesh = pNode->GetMesh();
+			int nControlPointCount = pMesh->GetControlPointsCount();
+			int nTriangleCount = pMesh->GetPolygonCount();
 			
-			FbxVector4* lVertexArray = NULL;
-			lVertexArray = new FbxVector4[lVertexCount];
-			memcpy(lVertexArray, lMesh->GetControlPoints(), lVertexCount * sizeof(FbxVector4));
+			FbxVector4* pVertexArray = NULL;
+			pVertexArray = new FbxVector4[nControlPointCount];
+			memcpy(pVertexArray, pMesh->GetControlPoints(), nControlPointCount * sizeof(FbxVector4));
+
+
+			// Vertex List
+			for (int i = 0; i < nControlPointCount; ++i)
+			{
+				float x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
+				float y = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
+				float z = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+
+				m_VertexArray.push_back(x);
+				m_VertexArray.push_back(y);
+				m_VertexArray.push_back(z);
+			}
+
+			// Index List
+			for (int i = 0; i < nTriangleCount; ++i)
+			{
+				for (int j = 0; j < 3; ++j)
+				{
+					int index = pMesh->GetPolygonVertex(i, j);
+					m_IndexArray.push_back(index);
+				}
+			}
 
 			printf("");
 		}

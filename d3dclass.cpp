@@ -52,7 +52,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.right = screenWidth;
 	m_ScissorRect.bottom = screenHeight;
 	
-	gSystem->m_pResourceManager->Load("cube.fbx");
+	gSystem->m_pResourceManager->Load("plane.fbx");
 
 	return true;
 }
@@ -111,7 +111,7 @@ bool D3DClass::Render()
 	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 	
 	// Then set the color to clear the window to.
-	float color[4] = { 0.f, 0.f, 0.5f, 1.0f };
+	float color[4] = { 0.f, 0.3f, 0.5f, 1.0f };
 	m_commandList->ClearRenderTargetView(rtvHandle, color, 0, NULL);
 	m_commandList->ClearDepthStencilView(m_DepthStencilViewHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -126,7 +126,7 @@ bool D3DClass::Render()
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
 
 	m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-	m_commandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
+	//m_commandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
 	
 
 	// something end
@@ -257,6 +257,7 @@ bool D3DClass::BuildPSO()
 	
 	CD3DX12_RASTERIZER_DESC resterize_desc(D3D12_DEFAULT);
 	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	resterize_desc.CullMode = D3D12_CULL_MODE_FRONT;
 	psoDesc.RasterizerState = resterize_desc;
 
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -293,7 +294,23 @@ bool D3DClass::CreateVertexBuffer()
 		{ 0.0f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f }
 	};
 
-	int nVertexBufferSize = sizeof(vList);
+	std::vector<float> copyVertexArray = gSystem->m_pResourceManager->m_VertexArray;
+
+
+	std::vector<Vertex> VertexVector;
+	for (unsigned int i = 0; i < copyVertexArray.size(); i+=3)
+	{
+		Vertex v;
+		v.Pos.x = copyVertexArray[i];
+		v.Pos.y = copyVertexArray[i + 1];
+		v.Pos.z = copyVertexArray[i + 2];
+		v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+
+		VertexVector.push_back(v);
+	}
+
+	//int nVertexBufferSize = sizeof(vList);		// hhg
+	int nVertexBufferSize = VertexVector.size() * sizeof(Vertex);
 
 	m_device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -318,7 +335,8 @@ bool D3DClass::CreateVertexBuffer()
 	vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
 
 	D3D12_SUBRESOURCE_DATA vertexData = {};
-	vertexData.pData = vList;
+	//vertexData.pData = vList;						//hhg
+	vertexData.pData = VertexVector.data();
 	vertexData.RowPitch = nVertexBufferSize;
 	vertexData.SlicePitch = nVertexBufferSize;
 						
@@ -347,7 +365,10 @@ bool D3DClass::CreateIndexBuffer()
 		0, 3, 1, // second triangle
 	};
 
-	int nIndexBufferSize = sizeof(iList);
+	std::vector<int> copyIndexArray = gSystem->m_pResourceManager->m_IndexArray;
+
+	//int nIndexBufferSize = sizeof(iList);				//hhg
+	int nIndexBufferSize = copyIndexArray.size() * sizeof(int);
 
 	m_device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -371,7 +392,8 @@ bool D3DClass::CreateIndexBuffer()
 	vBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
 
 	D3D12_SUBRESOURCE_DATA indexData = {};
-	indexData.pData = iList;
+	//indexData.pData = iList;							//hhg
+	indexData.pData = copyIndexArray.data();
 	indexData.RowPitch = nIndexBufferSize;
 	indexData.SlicePitch = nIndexBufferSize;
 
