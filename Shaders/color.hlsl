@@ -16,10 +16,18 @@ struct VS_OUTPUT
 	float4 color: COLOR;
 };
 
+cbuffer cb0 : register(b0)
+{
+	float4x4 view;
+	float4x4 proj;
+};
+
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.pos = float4(input.pos, 1.0f);
+	output.pos = mul(output.pos, view);
+	output.pos = mul(output.pos, proj);
 	output.color = input.color;
 	return output;
 

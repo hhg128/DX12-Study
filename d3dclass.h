@@ -31,6 +31,16 @@ struct Vertex
 	XMFLOAT4 color;
 };
 
+struct ConstantBuffer
+{
+	XMFLOAT4X4 view;
+	XMFLOAT4X4 proj;
+
+	// Constant buffers are 256-byte aligned in GPU memory. Padding is added
+	// for convenience when computing the struct's size.
+	float padding[32];
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: D3DClass
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +62,9 @@ public:
 
 	bool CreateVertexBuffer();
 	bool CreateIndexBuffer();
+
+	bool CreateConstantBufferViewDescriptorHeap();
+	bool CreateConstantBufferView();
 	
 	bool CreateDevice();
 	bool CreateCommandQueue();
@@ -69,32 +82,14 @@ public:
 	
 	bool CreateFence();
 
+	void OnCamera();
+
 private:
 	ComPtr<ID3DBlob> CompileShader(
 		const std::wstring& filename,
 		const D3D_SHADER_MACRO* defines,
 		const std::string& entrypoint,
-		const std::string& target)
-	{
-		UINT compileFlags = 0;
-#if defined(DEBUG) || defined(_DEBUG)  
-		compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-		HRESULT hr = S_OK;
-
-		ComPtr<ID3DBlob> byteCode = nullptr;
-		ComPtr<ID3DBlob> errors;
-		hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-			entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
-
-		if (errors != nullptr)
-			OutputDebugStringA((char*)errors->GetBufferPointer());
-
-		AssertIfFailed(hr);
-
-		return byteCode;
-	}
+		const std::string& target);
 
 private:
 
@@ -137,10 +132,17 @@ private:
 	ComPtr<ID3D12Resource>		m_pIndexBuffer;
 	D3D12_INDEX_BUFFER_VIEW		m_indexBufferView;
 
+	ComPtr<ID3D12DescriptorHeap>	m_cbvHeap;
+	ComPtr<ID3D12Resource>			m_pConstantBuffer;
+	D3D12_INDEX_BUFFER_VIEW			m_ConstantBufferView;
+	UINT8*							m_pConstantBufferData;
+
 	ComPtr<IDXGIFactory4>	m_dxgiFactory;
 
 	ComPtr<ID3D12DescriptorHeap>	m_DepthStencilViewHeap;
 	ComPtr<ID3D12Resource>			m_DepthStencilBuffer;
+
+
 
 	int m_nWindowWidth, m_nWindowHeight;
 

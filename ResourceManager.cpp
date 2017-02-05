@@ -88,10 +88,11 @@ void CResourceManager::Load(std::string fbxFileName)
 			// Vertex List
 			for (int i = 0; i < nControlPointCount; ++i)
 			{
+				// Max 는 Y가 D3D 의 Z임
 				XMFLOAT3 currPosition;
 				currPosition.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
-				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
-				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
+				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
+				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
 
 				ModelClass::VertexType vertex;
 				vertex.Pos = currPosition;
@@ -105,10 +106,11 @@ void CResourceManager::Load(std::string fbxFileName)
 				int indexB = pMesh->GetPolygonVertex(i, 1);
 				int indexC = pMesh->GetPolygonVertex(i, 2);
 
+				// Max 는 CCW로 인덱싱 되어 있음, D3D는 CW가 기본임, 그래서 순서를 바꿔줌
 				ModelClass::IndexType index;
 				index.a = indexA;
-				index.b = indexB;
-				index.c = indexC;
+				index.b = indexC;
+				index.c = indexB;
 				model->m_IndexArray.push_back(index);
 			}
 

@@ -30,6 +30,9 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	CreateDepthStencilViewDescriptorHeap();
 	CreateDepthStencilView();
 
+	CreateConstantBufferViewDescriptorHeap();
+	CreateConstantBufferView();
+
 	BuildRootSignatures();
 
 	BuildShader();
@@ -56,7 +59,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.bottom = screenHeight;
 	
 	gSystem->m_pResourceManager->Load("plane.fbx");
-	gSystem->m_pResourceManager->Load("plane.fbx");
+	//gSystem->m_pResourceManager->Load("plane.fbx");
 	gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 
 	return true;
@@ -129,6 +132,10 @@ bool D3DClass::Render()
 	m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
 	m_commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView); // set the vertex buffer (using the vertex buffer view)
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
+
+	OnCamera();
+	m_commandList->SetGraphicsRootConstantBufferView(0, m_pConstantBuffer->GetGPUVirtualAddress() + m_CurrentBufferIndex * sizeof(ConstantBuffer));
+	//m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	int baseVertexLocation = 0;
 
@@ -231,8 +238,12 @@ bool D3DClass::BuildInputLayout()
 
 bool D3DClass::BuildRootSignatures()
 {
+	CD3DX12_ROOT_PARAMETER constant;
+	constant.InitAsConstantBufferView(0, 0);
+
 	// 지금은 '루트 시그니처'에 아무런 '루트 파라미터'가 없지만 나중을 위해서 일부러 넣었다.
 	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
+	slotRootParameter.push_back(constant);
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init(slotRootParameter.size(), slotRootParameter.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -472,6 +483,61 @@ bool D3DClass::CreateIndexBuffer()
 	m_indexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = nIndexBufferSize;
+
+	return true;
+}
+
+bool D3DClass::CreateConstantBufferViewDescriptorHeap()
+{
+	HRESULT result;
+
+	// Initialize the render target view heap description for the two back buffers.
+	D3D12_DESCRIPTOR_HEAP_DESC constantBufferViewHeapDesc = {};
+
+	// Set the number of descriptors to two for our two back buffers.  Also set the heap type to render target views.
+	constantBufferViewHeapDesc.NumDescriptors = 1;
+	constantBufferViewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	constantBufferViewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	// Create the render target view heap for the back buffers.
+	result = m_device->CreateDescriptorHeap(&constantBufferViewHeapDesc, IID_PPV_ARGS(&m_cbvHeap));
+	if (FAILED(result))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool D3DClass::CreateConstantBufferView()
+{
+	HRESULT hr;
+
+	const UINT constantBufferSize = sizeof(ConstantBuffer) * m_nBackBufferCount;
+
+	ThrowIfFailed(m_device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&m_pConstantBuffer)
+	));
+
+	m_pConstantBuffer->SetName(TEXT("Constant Buffer!!"));
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation = m_pConstantBuffer->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = (sizeof(m_pConstantBuffer) + 255) & ~255;	// CB size is required to be 256-byte aligned.
+	m_device->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+	CD3DX12_RANGE readRange(0, 0);		// We do not intend to read from this resource on the CPU.
+	hr = m_pConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pConstantBufferData));
+	if (FAILED(hr))
+	{
+		return false;
+	}
+	ZeroMemory(m_pConstantBufferData, constantBufferSize);
 
 	return true;
 }
@@ -740,4 +806,49 @@ bool D3DClass::CreateFence()
 	m_fenceValue = 1;
 
 	return true;
+}
+
+void D3DClass::OnCamera()
+{
+	ConstantBuffer constantBuffer = {};
+
+	XMFLOAT3 position(0.f, 0.f, 0.f), lookDir(0.f, 0.f, 1.f), upDir(0.f, 1.f, 0.f);
+	XMMATRIX lookMat = XMMatrixLookToRH(XMLoadFloat3(&position), XMLoadFloat3(&lookDir), XMLoadFloat3(&upDir));
+	XMMATRIX projMat = XMMatrixPerspectiveFovRH(1.0f, 800/600, 0.1f, 1000.0f);
+	//XMStoreFloat4x4(&constantBuffer.worldViewProjection, XMMatrixMultiply(lookMat, projMat));
+	
+	XMStoreFloat4x4(&constantBuffer.view, lookMat);
+	XMStoreFloat4x4(&constantBuffer.proj, projMat);
+	
+
+	UINT8* destination = m_pConstantBufferData + sizeof(ConstantBuffer) * m_CurrentBufferIndex;
+	memcpy(destination, &constantBuffer, sizeof(ConstantBuffer));
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+ComPtr<ID3DBlob> D3DClass::CompileShader(
+	const std::wstring& filename,
+	const D3D_SHADER_MACRO* defines,
+	const std::string& entrypoint,
+	const std::string& target)
+{
+	UINT compileFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)  
+	compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+	HRESULT hr = S_OK;
+
+	ComPtr<ID3DBlob> byteCode = nullptr;
+	ComPtr<ID3DBlob> errors;
+	hr = D3DCompileFromFile(filename.c_str(), defines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		entrypoint.c_str(), target.c_str(), compileFlags, 0, &byteCode, &errors);
+
+	if (errors != nullptr)
+		OutputDebugStringA((char*)errors->GetBufferPointer());
+
+	AssertIfFailed(hr);
+
+	return byteCode;
 }
