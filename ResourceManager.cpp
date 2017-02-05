@@ -19,11 +19,11 @@ void CResourceManager::Initialize()
 void CResourceManager::Finalize()
 {
 	// 관리하던 모델 정보를 정리한다.
-	for (auto item : m_ModelArray)
+	for (auto item : m_ModelMap)
 	{
-		delete item;
+		delete item.second;
 	}
-	m_ModelArray.clear();
+	m_ModelMap.clear();
 
 
 	m_pScene = nullptr;
@@ -32,8 +32,21 @@ void CResourceManager::Finalize()
 	if (m_pSdkManager)	m_pSdkManager->Destroy();
 }
 
-void CResourceManager::Load(const std::string fbxFileName)
+void CResourceManager::Load(std::string fbxFileName)
 {
+	// 같은 이름을 가진 파일이 있었는지 확인해보고, 있었다면 로드하지 않고 넘어간다.
+	auto search = m_ModelMap.find(fbxFileName);
+	if (search != m_ModelMap.end())
+	{
+		std::string message_a = "[warning]" + fbxFileName + " already exist!";
+		std::wstring message_w;
+
+		message_w.assign(message_a.begin(), message_a.end());
+		OutputDebugString(message_w.c_str());
+
+		return;
+	}
+
 	FbxIOSettings* pIOSettings = FbxIOSettings::Create(m_pSdkManager, IOSROOT);
 	m_pSdkManager->SetIOSettings(pIOSettings);
 
@@ -99,12 +112,11 @@ void CResourceManager::Load(const std::string fbxFileName)
 				model->m_IndexArray.push_back(index);
 			}
 
-			m_ModelArray.push_back(model);
+			m_ModelMap[fbxFileName] = model;
 		}
 	}
 }
 
 void CResourceManager::Export()
 {
-
 }

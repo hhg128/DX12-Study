@@ -13,7 +13,7 @@ public:
 	void Initialize();
 	void Finalize();
 
-	void Load(const std::string fbxFileName);
+	void Load(std::string fbxFileName);
 
 	void Export();
 
@@ -22,7 +22,6 @@ private:
 	FbxScene*		m_pScene = nullptr;
 
 public:
-
-	std::vector<ModelClass*> m_ModelArray;
+	std::unordered_map<std::string, ModelClass*> m_ModelMap;
 };
 

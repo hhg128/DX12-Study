@@ -56,6 +56,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.bottom = screenHeight;
 	
 	gSystem->m_pResourceManager->Load("plane.fbx");
+	gSystem->m_pResourceManager->Load("plane.fbx");
 	gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 
 	return true;
@@ -131,12 +132,21 @@ bool D3DClass::Render()
 
 	int baseVertexLocation = 0;
 
-	const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
-	for (size_t i = 0; i < ModelArray.size(); ++i)
+	//const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
+	//for (size_t i = 0; i < ModelArray.size(); ++i)
+	//{
+	//	int vertexCount = ModelArray[i]->m_VertexArray.size();
+	//	int indexCount = ModelArray[i]->m_IndexArray.size();
+	//	m_commandList->DrawIndexedInstanced(indexCount*3, 1, 0, baseVertexLocation, 0);
+	//	baseVertexLocation += vertexCount;
+	//}
+
+	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		int vertexCount = ModelArray[i]->m_VertexArray.size();
-		int indexCount = ModelArray[i]->m_IndexArray.size();
-		m_commandList->DrawIndexedInstanced(indexCount*3, 1, 0, baseVertexLocation, 0);
+		int vertexCount = iter.second->m_VertexArray.size();
+		int indexCount = iter.second->m_IndexArray.size();
+
+		m_commandList->DrawIndexedInstanced(indexCount * 3, 1, 0, baseVertexLocation, 0);
 		baseVertexLocation += vertexCount;
 	}
 
@@ -310,10 +320,24 @@ bool D3DClass::CreateVertexBuffer()
 	};
 
 	std::vector<Vertex> VertexVector;
-	const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
-	for (size_t i = 0; i < ModelArray.size(); ++i)
+
+	//const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
+	//for (size_t i = 0; i < ModelArray.size(); ++i)
+	//{
+	//	const auto& vertexArray = ModelArray[i]->m_VertexArray;
+	//	for (size_t j = 0; j < vertexArray.size(); ++j)
+	//	{
+	//		Vertex v;
+	//		v.Pos = vertexArray[j].Pos;
+	//		v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	//		VertexVector.push_back(v);
+	//	}
+	//}
+
+	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		const auto& vertexArray = ModelArray[i]->m_VertexArray;
+		const auto& vertexArray = iter.second->m_VertexArray;
 		for (size_t j = 0; j < vertexArray.size(); ++j)
 		{
 			Vertex v;
@@ -382,10 +406,21 @@ bool D3DClass::CreateIndexBuffer()
 
 	std::vector<int> copyIndexArray;
 
-	const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
-	for (size_t i = 0; i < ModelArray.size(); ++i)
+	//const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
+	//for (size_t i = 0; i < ModelArray.size(); ++i)
+	//{
+	//	const auto& indexArray = ModelArray[i]->m_IndexArray;
+	//	for (size_t j = 0; j < indexArray.size(); ++j)
+	//	{
+	//		copyIndexArray.push_back(indexArray[j].a);
+	//		copyIndexArray.push_back(indexArray[j].b);
+	//		copyIndexArray.push_back(indexArray[j].c);
+	//	}
+	//}
+
+	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		const auto& indexArray = ModelArray[i]->m_IndexArray;
+		const auto& indexArray = iter.second->m_IndexArray;
 		for (size_t j = 0; j < indexArray.size(); ++j)
 		{
 			copyIndexArray.push_back(indexArray[j].a);
