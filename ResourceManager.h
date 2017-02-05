@@ -1,8 +1,8 @@
 #pragma once
 
-#include <fbxsdk.h>
-#include <string>
-#include <vector>
+using namespace DirectX;
+
+class ModelClass;
 
 class CResourceManager
 {
@@ -15,12 +15,14 @@ public:
 
 	void Load(const std::string fbxFileName);
 
+	void Export();
+
 private:
 	FbxManager*		m_pSdkManager = nullptr;
 	FbxScene*		m_pScene = nullptr;
 
 public:
-	std::vector<int> m_IndexArray;
-	std::vector<float> m_VertexArray;
+
+	std::vector<ModelClass*> m_ModelArray;
 };
 

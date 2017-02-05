@@ -45,3 +45,4 @@ Release/
 .vs/
 x64/
 /*.db
+/ipch

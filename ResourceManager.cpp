@@ -1,4 +1,6 @@
+#include "stdafx.h"
 #include "ResourceManager.h"
+#include "ModelClass.h"
 
 CResourceManager::CResourceManager()
 {
@@ -16,6 +18,14 @@ void CResourceManager::Initialize()
 
 void CResourceManager::Finalize()
 {
+	// 관리하던 모델 정보를 정리한다.
+	for (auto item : m_ModelArray)
+	{
+		delete item;
+	}
+	m_ModelArray.clear();
+
+
 	m_pScene = nullptr;
 
 	// 마지막으로 SdkManager를 정리하자.
@@ -41,6 +51,14 @@ void CResourceManager::Load(const std::string fbxFileName)
 	// Import the contents of the file into the scene.
 	pImporter->Import(pScene);
 
+	// Convert Axis System to what is used in this example, if needed
+	FbxAxisSystem SceneAxisSystem = pScene->GetGlobalSettings().GetAxisSystem();
+	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
+	if (SceneAxisSystem != OurAxisSystem)
+	{
+		OurAxisSystem.ConvertScene(pScene);
+	}
+
 	const int lNodeCount = pScene->GetSrcObjectCount<FbxNode>();
 	for (int lIndex = 0; lIndex < lNodeCount; lIndex++)
 	{
@@ -51,35 +69,42 @@ void CResourceManager::Load(const std::string fbxFileName)
 			FbxMesh* pMesh = pNode->GetMesh();
 			int nControlPointCount = pMesh->GetControlPointsCount();
 			int nTriangleCount = pMesh->GetPolygonCount();
-			
-			FbxVector4* pVertexArray = NULL;
-			pVertexArray = new FbxVector4[nControlPointCount];
-			memcpy(pVertexArray, pMesh->GetControlPoints(), nControlPointCount * sizeof(FbxVector4));
 
+			ModelClass* model = new ModelClass;
 
 			// Vertex List
 			for (int i = 0; i < nControlPointCount; ++i)
 			{
-				float x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
-				float y = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
-				float z = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+				XMFLOAT3 currPosition;
+				currPosition.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
+				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
 
-				m_VertexArray.push_back(x);
-				m_VertexArray.push_back(y);
-				m_VertexArray.push_back(z);
+				ModelClass::VertexType vertex;
+				vertex.Pos = currPosition;
+				model->m_VertexArray.push_back(vertex);
 			}
 
 			// Index List
 			for (int i = 0; i < nTriangleCount; ++i)
 			{
-				for (int j = 0; j < 3; ++j)
-				{
-					int index = pMesh->GetPolygonVertex(i, j);
-					m_IndexArray.push_back(index);
-				}
+				int indexA = pMesh->GetPolygonVertex(i, 0);
+				int indexB = pMesh->GetPolygonVertex(i, 1);
+				int indexC = pMesh->GetPolygonVertex(i, 2);
+
+				ModelClass::IndexType index;
+				index.a = indexA;
+				index.b = indexB;
+				index.c = indexC;
+				model->m_IndexArray.push_back(index);
 			}
 
-			printf("");
+			m_ModelArray.push_back(model);
 		}
 	}
+}
+
+void CResourceManager::Export()
+{
+
 }

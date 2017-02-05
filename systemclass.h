@@ -11,12 +11,6 @@
 #define WIN32_LEAN_AND_MEAN
 
 
-//////////////
-// INCLUDES //
-//////////////
-#include <windows.h>
-
-
 ///////////////////////
 // MY CLASS INCLUDES //
 ///////////////////////

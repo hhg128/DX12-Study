@@ -1,9 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Filename: d3dclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
+#include "stdafx.h"
+
 #include "d3dclass.h"
 #include "systemclass.h"
 #include "ResourceManager.h"
+#include "ModelClass.h"
 
 D3DClass::D3DClass()
 {
@@ -53,6 +56,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.bottom = screenHeight;
 	
 	gSystem->m_pResourceManager->Load("plane.fbx");
+	gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 
 	return true;
 }
@@ -125,7 +129,18 @@ bool D3DClass::Render()
 	m_commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView); // set the vertex buffer (using the vertex buffer view)
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
 
-	m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+	int baseVertexLocation = 0;
+
+	const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
+	for (size_t i = 0; i < ModelArray.size(); ++i)
+	{
+		int vertexCount = ModelArray[i]->m_VertexArray.size();
+		int indexCount = ModelArray[i]->m_IndexArray.size();
+		m_commandList->DrawIndexedInstanced(indexCount*3, 1, 0, baseVertexLocation, 0);
+		baseVertexLocation += vertexCount;
+	}
+
+	//m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 	//m_commandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
 	
 
@@ -256,8 +271,8 @@ bool D3DClass::BuildPSO()
 	};
 	
 	CD3DX12_RASTERIZER_DESC resterize_desc(D3D12_DEFAULT);
-	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;
-	resterize_desc.CullMode = D3D12_CULL_MODE_FRONT;
+	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;		// 테스트를 위해 FillMode, CullMode 를 보기 쉽게 한다
+	resterize_desc.CullMode = D3D12_CULL_MODE_NONE;
 	psoDesc.RasterizerState = resterize_desc;
 
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -294,19 +309,19 @@ bool D3DClass::CreateVertexBuffer()
 		{ 0.0f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f }
 	};
 
-	std::vector<float> copyVertexArray = gSystem->m_pResourceManager->m_VertexArray;
-
-
 	std::vector<Vertex> VertexVector;
-	for (unsigned int i = 0; i < copyVertexArray.size(); i+=3)
+	const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
+	for (size_t i = 0; i < ModelArray.size(); ++i)
 	{
-		Vertex v;
-		v.Pos.x = copyVertexArray[i];
-		v.Pos.y = copyVertexArray[i + 1];
-		v.Pos.z = copyVertexArray[i + 2];
-		v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		const auto& vertexArray = ModelArray[i]->m_VertexArray;
+		for (size_t j = 0; j < vertexArray.size(); ++j)
+		{
+			Vertex v;
+			v.Pos = vertexArray[j].Pos;
+			v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
-		VertexVector.push_back(v);
+			VertexVector.push_back(v);
+		}
 	}
 
 	//int nVertexBufferSize = sizeof(vList);		// hhg
@@ -365,7 +380,19 @@ bool D3DClass::CreateIndexBuffer()
 		0, 3, 1, // second triangle
 	};
 
-	std::vector<int> copyIndexArray = gSystem->m_pResourceManager->m_IndexArray;
+	std::vector<int> copyIndexArray;
+
+	const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
+	for (size_t i = 0; i < ModelArray.size(); ++i)
+	{
+		const auto& indexArray = ModelArray[i]->m_IndexArray;
+		for (size_t j = 0; j < indexArray.size(); ++j)
+		{
+			copyIndexArray.push_back(indexArray[j].a);
+			copyIndexArray.push_back(indexArray[j].b);
+			copyIndexArray.push_back(indexArray[j].c);
+		}
+	}
 
 	//int nIndexBufferSize = sizeof(iList);				//hhg
 	int nIndexBufferSize = copyIndexArray.size() * sizeof(int);
