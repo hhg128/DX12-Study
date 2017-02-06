@@ -134,8 +134,11 @@ bool D3DClass::Render()
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
 
 	OnCamera();
-	m_commandList->SetGraphicsRootConstantBufferView(0, m_pConstantBuffer->GetGPUVirtualAddress() + m_CurrentBufferIndex * sizeof(ConstantBuffer));
+	//m_commandList->SetGraphicsRootConstantBufferView(0, m_pConstantBuffer->GetGPUVirtualAddress() + m_CurrentBufferIndex * sizeof(ConstantBuffer));
 	//m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	auto passCB = PassCB->Resource();
+	m_commandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
 	int baseVertexLocation = 0;
 
@@ -511,6 +514,8 @@ bool D3DClass::CreateConstantBufferViewDescriptorHeap()
 
 bool D3DClass::CreateConstantBufferView()
 {
+	PassCB = std::make_unique<UploadBuffer<ConstantBuffer>>(m_device.Get(), 1, true);
+
 	HRESULT hr;
 
 	const UINT constantBufferSize = sizeof(ConstantBuffer) * m_nBackBufferCount;
@@ -812,14 +817,18 @@ void D3DClass::OnCamera()
 {
 	if (gInput->IsKeyDown(VK_UP))
 	{
-		//m_Camera.Walk(0.1f);
-		//m_Camera.LiftUp(0.1f);
-		m_Camera.RotateY(0.1f);
+		m_Camera.Walk(0.1f);
 	}
 	if (gInput->IsKeyDown(VK_DOWN))
 	{
-		//m_Camera.Walk(0.1f);
-		//m_Camera.LiftUp(-0.1f);
+		m_Camera.Walk(-0.1f);
+	}
+	if (gInput->IsKeyDown(VK_RIGHT))
+	{
+		m_Camera.RotateY(0.1f);
+	}
+	if (gInput->IsKeyDown(VK_LEFT))
+	{
 		m_Camera.RotateY(-0.1f);
 	}
 	
@@ -836,6 +845,8 @@ void D3DClass::OnCamera()
 
 	UINT8* destination = m_pConstantBufferData + sizeof(ConstantBuffer) * m_CurrentBufferIndex;
 	memcpy(destination, &constantBuffer, sizeof(ConstantBuffer));
+
+	PassCB->CopyData(0, constantBuffer);
 }
 
 //////////////////////////////////////////////////////////////////////////

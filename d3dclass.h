@@ -5,6 +5,7 @@
 #define _D3DCLASS_H_
 
 #include "CameraClass.h"
+#include "UploadBuffer.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -151,6 +152,9 @@ private:
 	int rtvDescriptorSize;
 
 	CameraClass m_Camera;
+
+
+	std::unique_ptr<UploadBuffer<ConstantBuffer>> PassCB = nullptr;
 };
 
 #endif
