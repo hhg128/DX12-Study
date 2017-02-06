@@ -4,6 +4,8 @@
 #ifndef _D3DCLASS_H_
 #define _D3DCLASS_H_
 
+#include "CameraClass.h"
+
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -147,6 +149,8 @@ private:
 	int m_nWindowWidth, m_nWindowHeight;
 
 	int rtvDescriptorSize;
+
+	CameraClass m_Camera;
 };
 
 #endif

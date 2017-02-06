@@ -58,7 +58,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.right = screenWidth;
 	m_ScissorRect.bottom = screenHeight;
 	
-	gSystem->m_pResourceManager->Load("plane.fbx");
+	//gSystem->m_pResourceManager->Load("plane.fbx");
 	//gSystem->m_pResourceManager->Load("plane.fbx");
 	gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 
@@ -810,11 +810,26 @@ bool D3DClass::CreateFence()
 
 void D3DClass::OnCamera()
 {
+	static XMFLOAT3 position(0.f, 0.f, 0.f), lookDir(0.f, 0.f, 1.f), upDir(0.f, 1.f, 0.f);
+
+	if (gInput->IsKeyDown(VK_UP))
+	{
+		m_Camera.Walk(0.1f);
+	}
+	if (gInput->IsKeyDown(VK_DOWN))
+	{
+		m_Camera.Walk(-0.1f);
+	}
+	
+	// 카메라 행렬 업데이트
+	m_Camera.Update();
+
 	ConstantBuffer constantBuffer = {};
 
-	XMFLOAT3 position(0.f, 0.f, 0.f), lookDir(0.f, 0.f, 1.f), upDir(0.f, 1.f, 0.f);
-	XMMATRIX lookMat = XMMatrixLookToRH(XMLoadFloat3(&position), XMLoadFloat3(&lookDir), XMLoadFloat3(&upDir));
-	XMMATRIX projMat = XMMatrixPerspectiveFovRH(1.0f, 800/600, 0.1f, 1000.0f);
+	
+	//XMMATRIX lookMat = XMMatrixLookToRH(XMLoadFloat3(&position), XMLoadFloat3(&lookDir), XMLoadFloat3(&upDir));
+	XMMATRIX lookMat = m_Camera.GetViewMatrix();
+	XMMATRIX projMat = XMMatrixPerspectiveFovLH(XM_PI / 4.f, 800/600, 0.1f, 1000.0f);
 	//XMStoreFloat4x4(&constantBuffer.worldViewProjection, XMMatrixMultiply(lookMat, projMat));
 	
 	XMStoreFloat4x4(&constantBuffer.view, lookMat);

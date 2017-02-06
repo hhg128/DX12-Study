@@ -6,6 +6,8 @@
 #include "inputclass.h"
 
 
+InputClass* gInput = NULL;
+
 InputClass::InputClass()
 {
 }
@@ -31,6 +33,8 @@ void InputClass::Initialize()
 	{
 		m_keys[i] = false;
 	}
+
+	gInput = this;
 
 	return;
 }

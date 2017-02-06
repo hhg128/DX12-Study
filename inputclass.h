@@ -26,4 +26,6 @@ private:
 	bool m_keys[256];
 };
 
+extern InputClass* gInput;
+
 #endif
