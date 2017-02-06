@@ -15,6 +15,7 @@ public:
 	struct VertexType
 	{
 		XMFLOAT3 Pos;
+		XMFLOAT2 UV;
 	};
 
 	struct IndexType

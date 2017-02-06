@@ -60,7 +60,9 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	
 	//gSystem->m_pResourceManager->Load("plane.fbx");
 	//gSystem->m_pResourceManager->Load("plane.fbx");
-	gSystem->m_pResourceManager->Load("cube_size_1.fbx");
+	//gSystem->m_pResourceManager->Load("cube_size_1.fbx");
+	//gSystem->m_pResourceManager->Load("humanoid.fbx");
+	gSystem->m_pResourceManager->Load("BG.fbx");
 
 	return true;
 }
@@ -807,32 +809,32 @@ void D3DClass::OnCamera(float fDelta)
 {
 	if (gInput->IsKeyDown(VK_UP))
 	{
-		m_Camera.Pitch(-0.5f*fDelta);
+		m_Camera.Pitch(-1.0f*fDelta);
 	}
 	if (gInput->IsKeyDown(VK_DOWN))
 	{
-		m_Camera.Pitch(0.5f*fDelta);
+		m_Camera.Pitch(1.0f*fDelta);
 	}
 	if (gInput->IsKeyDown(VK_RIGHT))
 	{
-		m_Camera.RotateY(0.5f*fDelta);
+		m_Camera.RotateY(1.0f*fDelta);
 	}
 	if (gInput->IsKeyDown(VK_LEFT))
 	{
-		m_Camera.RotateY(-0.5f*fDelta);
+		m_Camera.RotateY(-1.0f*fDelta);
 	}
 
 	if (GetAsyncKeyState('W') & 0x8000)
-		m_Camera.Walk(10.0f*fDelta);
+		m_Camera.Walk(1.0f*fDelta);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		m_Camera.Walk(-10.0f*fDelta);
+		m_Camera.Walk(-1.0f*fDelta);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		m_Camera.Strafe(-10.0f*fDelta);
+		m_Camera.Strafe(-1.0f*fDelta);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		m_Camera.Strafe(10.0f*fDelta);
+		m_Camera.Strafe(1.0f*fDelta);
 
 	if (GetAsyncKeyState('R') & 0x8000)
 	{

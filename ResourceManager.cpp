@@ -72,12 +72,13 @@ void CResourceManager::Load(std::string fbxFileName)
 		OurAxisSystem.ConvertScene(pScene);
 	}
 
+	
 	const int lNodeCount = pScene->GetSrcObjectCount<FbxNode>();
 	for (int lIndex = 0; lIndex < lNodeCount; lIndex++)
 	{
 		FbxNode* pNode = pScene->GetSrcObject<FbxNode>(lIndex);
 
-		if (pNode->GetGeometry())
+		if (pNode->GetNodeAttribute() && pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
 			FbxMesh* pMesh = pNode->GetMesh();
 			int nControlPointCount = pMesh->GetControlPointsCount();
@@ -91,11 +92,61 @@ void CResourceManager::Load(std::string fbxFileName)
 				// Max 는 Y가 D3D 의 Z임
 				XMFLOAT3 currPosition;
 				currPosition.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
-				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
-				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
+
+				// 일단 텍스처는 하나만 생각한다
+				XMFLOAT2 outUV;
+
+				FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
+				if (vertexUV)
+				{
+					switch (vertexUV->GetMappingMode())
+					{
+					case FbxGeometryElement::eByControlPoint:
+						switch (vertexUV->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						{
+							outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[0]);
+							outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[1]);
+						}
+						break;
+
+						case FbxGeometryElement::eIndexToDirect:
+						{
+							int index = vertexUV->GetIndexArray().GetAt(i);
+							outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[0]);
+							outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[1]);
+						}
+						break;
+
+						default:
+							throw std::exception("Invalid Reference");
+						}
+						break;
+
+					case FbxGeometryElement::eByPolygonVertex:
+						switch (vertexUV->GetReferenceMode())
+						{
+						case FbxGeometryElement::eDirect:
+						case FbxGeometryElement::eIndexToDirect:
+						{
+							outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[0]);
+							outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[1]);
+						}
+						break;
+
+						default:
+							throw std::exception("Invalid Reference");
+						}
+						break;
+					}
+				}
 
 				ModelClass::VertexType vertex;
 				vertex.Pos = currPosition;
+				vertex.UV = outUV;
 				model->m_VertexArray.push_back(vertex);
 			}
 
@@ -103,20 +154,21 @@ void CResourceManager::Load(std::string fbxFileName)
 			for (int i = 0; i < nTriangleCount; ++i)
 			{
 				int indexA = pMesh->GetPolygonVertex(i, 0);
-				int indexB = pMesh->GetPolygonVertex(i, 1);
-				int indexC = pMesh->GetPolygonVertex(i, 2);
+				int indexB = pMesh->GetPolygonVertex(i, 2);
+				int indexC = pMesh->GetPolygonVertex(i, 1);
 
 				// Max 는 CCW로 인덱싱 되어 있음, D3D는 CW가 기본임, 그래서 순서를 바꿔줌
 				ModelClass::IndexType index;
 				index.a = indexA;
-				index.b = indexC;
-				index.c = indexB;
+				index.b = indexB;
+				index.c = indexC;
 				model->m_IndexArray.push_back(index);
 			}
 
 			m_ModelMap[fbxFileName] = model;
 		}
 	}
+	
 }
 
 void CResourceManager::Export()
