@@ -62,7 +62,8 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	//gSystem->m_pResourceManager->Load("plane.fbx");
 	//gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 	//gSystem->m_pResourceManager->Load("humanoid.fbx");
-	gSystem->m_pResourceManager->Load("BG.fbx");
+	//gSystem->m_pResourceManager->Load("BG.fbx");
+	gSystem->m_pResourceManager->Load("Cube FBX\\cube_with_texture.fbx");
 
 	return true;
 }
@@ -222,7 +223,8 @@ bool D3DClass::BuildInputLayout()
 	mInputLayout =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		//{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
 	return true;
@@ -284,7 +286,7 @@ bool D3DClass::BuildPSO()
 	};
 	
 	CD3DX12_RASTERIZER_DESC resterize_desc(D3D12_DEFAULT);
-	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;		// 테스트를 위해 FillMode, CullMode 를 보기 쉽게 한다
+	resterize_desc.FillMode = D3D12_FILL_MODE_SOLID;		// 테스트를 위해 FillMode, CullMode 를 보기 쉽게 한다
 	resterize_desc.CullMode = D3D12_CULL_MODE_NONE;
 	psoDesc.RasterizerState = resterize_desc;
 
