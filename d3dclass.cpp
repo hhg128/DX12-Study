@@ -293,7 +293,7 @@ bool D3DClass::BuildPSO()
 	
 	CD3DX12_RASTERIZER_DESC resterize_desc(D3D12_DEFAULT);
 	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;		// 테스트를 위해 FillMode, CullMode 를 보기 쉽게 한다
-	resterize_desc.CullMode = D3D12_CULL_MODE_NONE;
+	resterize_desc.CullMode = D3D12_CULL_MODE_BACK;
 	psoDesc.RasterizerState = resterize_desc;
 
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -810,15 +810,17 @@ bool D3DClass::CreateFence()
 
 void D3DClass::OnCamera()
 {
-	static XMFLOAT3 position(0.f, 0.f, 0.f), lookDir(0.f, 0.f, 1.f), upDir(0.f, 1.f, 0.f);
-
 	if (gInput->IsKeyDown(VK_UP))
 	{
-		m_Camera.Walk(0.1f);
+		//m_Camera.Walk(0.1f);
+		//m_Camera.LiftUp(0.1f);
+		m_Camera.RotateY(0.1f);
 	}
 	if (gInput->IsKeyDown(VK_DOWN))
 	{
-		m_Camera.Walk(-0.1f);
+		//m_Camera.Walk(0.1f);
+		//m_Camera.LiftUp(-0.1f);
+		m_Camera.RotateY(-0.1f);
 	}
 	
 	// 카메라 행렬 업데이트
@@ -826,15 +828,11 @@ void D3DClass::OnCamera()
 
 	ConstantBuffer constantBuffer = {};
 
-	
-	//XMMATRIX lookMat = XMMatrixLookToRH(XMLoadFloat3(&position), XMLoadFloat3(&lookDir), XMLoadFloat3(&upDir));
 	XMMATRIX lookMat = m_Camera.GetViewMatrix();
-	XMMATRIX projMat = XMMatrixPerspectiveFovLH(XM_PI / 4.f, 800/600, 0.1f, 1000.0f);
-	//XMStoreFloat4x4(&constantBuffer.worldViewProjection, XMMatrixMultiply(lookMat, projMat));
+	XMMATRIX projMat = m_Camera.GetProjMatrix();
 	
 	XMStoreFloat4x4(&constantBuffer.view, lookMat);
 	XMStoreFloat4x4(&constantBuffer.proj, projMat);
-	
 
 	UINT8* destination = m_pConstantBufferData + sizeof(ConstantBuffer) * m_CurrentBufferIndex;
 	memcpy(destination, &constantBuffer, sizeof(ConstantBuffer));

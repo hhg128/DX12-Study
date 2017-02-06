@@ -21,6 +21,9 @@ public:
 	void SetPos(XMFLOAT3 camPos);
 
 	void Walk(float d);
+	void LiftUp(float d);
+
+	void RotateY(float angle);
 	
 
 public:
@@ -31,7 +34,7 @@ public:
 	XMMATRIX	m_ProjMatrix;
 
 private:
-	XMFLOAT3 mPosition	= { 0.0f, 0.0f, 0.0f };
+	XMFLOAT3 mPosition	= { 0.0f, 0.0f, -10.0f };
 	XMFLOAT3 mRight		= { 1.0f, 0.0f, 0.0f };
 	XMFLOAT3 mUp		= { 0.0f, 1.0f, 0.0f };
 	XMFLOAT3 mLook		= { 0.0f, 0.0f, 1.0f };

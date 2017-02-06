@@ -34,6 +34,8 @@ DirectX::XMMATRIX CameraClass::GetViewMatrix()
 
 DirectX::XMMATRIX CameraClass::GetProjMatrix()
 {
+	XMMATRIX P = XMMatrixPerspectiveFovLH(XM_PI/4, 800/600, 0.1f, 1000.f);
+	XMStoreFloat4x4(&mProj, P);
 	return XMLoadFloat4x4(&mProj);
 }
 
@@ -93,4 +95,23 @@ void CameraClass::Walk(float d)
 	XMVECTOR l = XMLoadFloat3(&mLook);
 	XMVECTOR p = XMLoadFloat3(&mPosition);
 	XMStoreFloat3(&mPosition, XMVectorMultiplyAdd(s, l, p));
+}
+
+void CameraClass::LiftUp(float d)
+{
+	XMVECTOR s = XMVectorReplicate(d);
+	XMVECTOR u = XMLoadFloat3(&mUp);
+	XMVECTOR p = XMLoadFloat3(&mPosition);
+	XMStoreFloat3(&mPosition, XMVectorMultiplyAdd(s, u, p));
+}
+
+void CameraClass::RotateY(float angle)
+{
+	// Rotate the basis vectors about the world y-axis.
+
+	XMMATRIX R = XMMatrixRotationY(angle);
+
+	XMStoreFloat3(&mRight, XMVector3TransformNormal(XMLoadFloat3(&mRight), R));
+	XMStoreFloat3(&mUp, XMVector3TransformNormal(XMLoadFloat3(&mUp), R));
+	XMStoreFloat3(&mLook, XMVector3TransformNormal(XMLoadFloat3(&mLook), R));
 }
