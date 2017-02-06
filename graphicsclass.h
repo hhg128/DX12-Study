@@ -32,7 +32,9 @@ public:
 
 	bool Initialize(int, int, HWND);
 	void Shutdown();
-	bool Frame();
+	bool Frame(float fDelta);
+
+	void Tick(float fDelta);
 
 private:
 	bool Render();

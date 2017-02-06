@@ -17,7 +17,7 @@
 #include "inputclass.h"
 #include "graphicsclass.h"
 #include "ResourceManager.h"
-
+#include "GameTimer.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // Class name: SystemClass
@@ -36,7 +36,7 @@ public:
 	LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
 
 private:
-	bool Frame();
+	bool Frame(float fDelta);
 	void InitializeWindows(int&, int&);
 	void ShutdownWindows();
 
@@ -47,6 +47,8 @@ private:
 
 	InputClass* m_Input;
 	GraphicsClass* m_Graphics;
+
+	GameTimer mTimer;
 
 public:
 	CResourceManager* m_pResourceManager = nullptr;

@@ -39,9 +39,10 @@ struct ConstantBuffer
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 proj;
 
+	float fDeltaTime;
 	// Constant buffers are 256-byte aligned in GPU memory. Padding is added
 	// for convenience when computing the struct's size.
-	float padding[32];
+	float padding[31];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,6 +56,7 @@ public:
 	bool Initialize(int, int, HWND);
 	void Shutdown();
 	
+	void Tick(float fDelta);
 	bool Render();
 
 	bool BuildShader();
@@ -85,7 +87,7 @@ public:
 	
 	bool CreateFence();
 
-	void OnCamera();
+	void OnCamera(float fDelta);
 
 private:
 	ComPtr<ID3DBlob> CompileShader(

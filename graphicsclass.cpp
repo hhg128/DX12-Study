@@ -67,10 +67,11 @@ void GraphicsClass::Shutdown()
 }
 
 
-bool GraphicsClass::Frame()
+bool GraphicsClass::Frame(float fDelta)
 {
 	bool result;
 
+	Tick(fDelta);
 
 	// Render the graphics scene.
 	result = Render();
@@ -83,14 +84,14 @@ bool GraphicsClass::Frame()
 }
 
 
+void GraphicsClass::Tick(float fDelta)
+{
+	m_Direct3D->Tick(fDelta);
+}
+
 bool GraphicsClass::Render()
 {
-	bool result;
-
-
-	// Use the Direct3D object to render the scene.
-	result = m_Direct3D->Render();
-	if(!result)
+	if(!m_Direct3D->Render())
 	{
 		return false;
 	}

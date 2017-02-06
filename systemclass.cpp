@@ -104,6 +104,7 @@ void SystemClass::Run()
 	MSG msg;
 	bool done, result;
 
+	mTimer.Reset();
 
 	// Initialize the message structure.
 	ZeroMemory(&msg, sizeof(MSG));
@@ -126,8 +127,10 @@ void SystemClass::Run()
 		}
 		else
 		{
+			mTimer.Tick();
+
 			// Otherwise do the frame processing.
-			result = Frame();
+			result = Frame(mTimer.DeltaTime());
 			if(!result)
 			{
 				done = true;
@@ -140,7 +143,7 @@ void SystemClass::Run()
 }
 
 
-bool SystemClass::Frame()
+bool SystemClass::Frame(float fDelta)
 {
 	bool result;
 
@@ -152,7 +155,7 @@ bool SystemClass::Frame()
 	}
 
 	// Do the frame processing for the graphics object.
-	result = m_Graphics->Frame();
+	result = m_Graphics->Frame(fDelta);
 	if(!result)
 	{
 		return false;
@@ -166,6 +169,10 @@ LRESULT CALLBACK SystemClass::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam
 {
 	switch(umsg)
 	{
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+			return 0;
 		// Check if a key has been pressed on the keyboard.
 		case WM_KEYDOWN:
 		{

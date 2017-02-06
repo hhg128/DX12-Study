@@ -86,6 +86,11 @@ void D3DClass::Shutdown()
 }
 
 
+void D3DClass::Tick(float fDelta)
+{
+	OnCamera(fDelta);
+}
+
 bool D3DClass::Render()
 {
 	HRESULT result;
@@ -133,36 +138,18 @@ bool D3DClass::Render()
 	m_commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView); // set the vertex buffer (using the vertex buffer view)
 	m_commandList->IASetIndexBuffer(&m_indexBufferView);
 
-	OnCamera();
-	//m_commandList->SetGraphicsRootConstantBufferView(0, m_pConstantBuffer->GetGPUVirtualAddress() + m_CurrentBufferIndex * sizeof(ConstantBuffer));
-	//m_commandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
-
 	auto passCB = PassCB->Resource();
 	m_commandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
 	int baseVertexLocation = 0;
-
-	//const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
-	//for (size_t i = 0; i < ModelArray.size(); ++i)
-	//{
-	//	int vertexCount = ModelArray[i]->m_VertexArray.size();
-	//	int indexCount = ModelArray[i]->m_IndexArray.size();
-	//	m_commandList->DrawIndexedInstanced(indexCount*3, 1, 0, baseVertexLocation, 0);
-	//	baseVertexLocation += vertexCount;
-	//}
-
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
 		int vertexCount = iter.second->m_VertexArray.size();
-		int indexCount = iter.second->m_IndexArray.size();
+		int triangleCount = iter.second->m_IndexArray.size();
 
-		m_commandList->DrawIndexedInstanced(indexCount * 3, 1, 0, baseVertexLocation, 0);
+		m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, 0, baseVertexLocation, 0);
 		baseVertexLocation += vertexCount;
 	}
-
-	//m_commandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-	//m_commandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
-	
 
 	// something end
 	//////////////////////////////////////////////////////////////////////////
@@ -296,7 +283,7 @@ bool D3DClass::BuildPSO()
 	
 	CD3DX12_RASTERIZER_DESC resterize_desc(D3D12_DEFAULT);
 	resterize_desc.FillMode = D3D12_FILL_MODE_WIREFRAME;		// 테스트를 위해 FillMode, CullMode 를 보기 쉽게 한다
-	resterize_desc.CullMode = D3D12_CULL_MODE_BACK;
+	resterize_desc.CullMode = D3D12_CULL_MODE_NONE;
 	psoDesc.RasterizerState = resterize_desc;
 
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -813,35 +800,67 @@ bool D3DClass::CreateFence()
 	return true;
 }
 
-void D3DClass::OnCamera()
+DWORD					g_dwMouseX = 0;			// 마우스의 좌표
+DWORD					g_dwMouseY = 0;			// 마우스의 좌표
+
+void D3DClass::OnCamera(float fDelta)
 {
 	if (gInput->IsKeyDown(VK_UP))
 	{
-		m_Camera.Walk(0.1f);
+		m_Camera.Pitch(-0.5f*fDelta);
 	}
 	if (gInput->IsKeyDown(VK_DOWN))
 	{
-		m_Camera.Walk(-0.1f);
+		m_Camera.Pitch(0.5f*fDelta);
 	}
 	if (gInput->IsKeyDown(VK_RIGHT))
 	{
-		m_Camera.RotateY(0.1f);
+		m_Camera.RotateY(0.5f*fDelta);
 	}
 	if (gInput->IsKeyDown(VK_LEFT))
 	{
-		m_Camera.RotateY(-0.1f);
+		m_Camera.RotateY(-0.5f*fDelta);
+	}
+
+	if (GetAsyncKeyState('W') & 0x8000)
+		m_Camera.Walk(10.0f*fDelta);
+
+	if (GetAsyncKeyState('S') & 0x8000)
+		m_Camera.Walk(-10.0f*fDelta);
+
+	if (GetAsyncKeyState('A') & 0x8000)
+		m_Camera.Strafe(-10.0f*fDelta);
+
+	if (GetAsyncKeyState('D') & 0x8000)
+		m_Camera.Strafe(10.0f*fDelta);
+
+	if (GetAsyncKeyState('R') & 0x8000)
+	{
+		POINT	pt;
+
+		GetCursorPos(&pt);
+		int dx = pt.x - g_dwMouseX;	// 마우스의 변화값
+		int dy = pt.y - g_dwMouseY;	// 마우스의 변화값
+
+		m_Camera.Pitch(dy*fDelta * 2);
+		m_Camera.RotateY(dx*fDelta * 2);
+
+		g_dwMouseX = pt.x;
+		g_dwMouseY = pt.y;
 	}
 	
 	// 카메라 행렬 업데이트
-	m_Camera.Update();
+	m_Camera.UpdateViewMatrix();
 
 	ConstantBuffer constantBuffer = {};
 
-	XMMATRIX lookMat = m_Camera.GetViewMatrix();
-	XMMATRIX projMat = m_Camera.GetProjMatrix();
+	XMMATRIX lookMat = m_Camera.GetView();
+	XMMATRIX projMat = m_Camera.GetProj();
 	
-	XMStoreFloat4x4(&constantBuffer.view, lookMat);
-	XMStoreFloat4x4(&constantBuffer.proj, projMat);
+	XMStoreFloat4x4(&constantBuffer.view, XMMatrixTranspose(lookMat));
+	XMStoreFloat4x4(&constantBuffer.proj, XMMatrixTranspose(projMat));
+
+	constantBuffer.fDeltaTime = 109.f;
 
 	UINT8* destination = m_pConstantBufferData + sizeof(ConstantBuffer) * m_CurrentBufferIndex;
 	memcpy(destination, &constantBuffer, sizeof(ConstantBuffer));
