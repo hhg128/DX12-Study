@@ -7,15 +7,13 @@
 struct VS_INPUT
 {
 	float3 pos : POSITION;
-	//float4 color: COLOR;
 	float2 mTexCoord: TEXCOORD0;
 };
 
 struct VS_OUTPUT
 {
 	float4 pos: SV_POSITION;
-	//float4 color: COLOR;
-	float2 mTexCoord : TEXCOORD0;
+	float2 mTexCoord : TEXCOORD;
 };
 
 cbuffer cb0 : register(b0)
@@ -27,7 +25,7 @@ cbuffer cb0 : register(b0)
 
 Texture2D gDiffuseMap : register(t0);
 
-SamplerState gsamLinearWrap       : register(s0);
+SamplerState gsamLinearWrap : register(s0);
 
 VS_OUTPUT VS(VS_INPUT input)
 {
@@ -35,17 +33,14 @@ VS_OUTPUT VS(VS_INPUT input)
 	output.pos = float4(input.pos, 1.0f);
 	output.pos = mul(output.pos, view);
 	output.pos = mul(output.pos, proj);
-	//output.color = input.color;
+	
 	output.mTexCoord = input.mTexCoord;
+	
 	return output;
-
 }
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-	//return input.color;
-	//float4 albedo = tex2D(DiffuseSampler, Input.mTexCoord);
 	float4 albedo = gDiffuseMap.Sample(gsamLinearWrap, input.mTexCoord);
 	return albedo;
-	//return float4(1.f, 0.f, 0.f, 0.f);
 }
