@@ -146,7 +146,8 @@ void CResourceManager::Load(std::string fbxFileName)
 
 				ModelClass::VertexType vertex;
 				vertex.Pos = currPosition;
-				vertex.UV = outUV;
+				vertex.UV.x = 1.f - outUV.x;
+				vertex.UV.y = 1.f - outUV.y;
 				model->m_VertexArray.push_back(vertex);
 			}
 

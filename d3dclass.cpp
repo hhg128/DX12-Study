@@ -303,11 +303,18 @@ bool D3DClass::BuildRootSignatures()
 
 bool D3DClass::BuildGeometry()
 {
+	m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
+
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 
-	//LoadTexture("texture");
-	CreateSRVBufferView();
+	LoadTexture("texture");
+
+	m_commandList->Close();
+	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	//CreateSRVBufferView();
 
 	return true;
 }
@@ -353,35 +360,7 @@ bool D3DClass::BuildPSO()
 
 bool D3DClass::CreateVertexBuffer()
 {
-	//Vertex vList[] = {
-	//	// first quad (closer to camera, blue)
-	//	{ -0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-	//	{ 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-	//	{ -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-	//	{ 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-
-	//	// second quad (further from camera, green)
-	//	{ -0.75f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
-	//	{ 0.0f,  0.0f, 0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
-	//	{ -0.75f,  0.0f, 0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
-	//	{ 0.0f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f }
-	//};
-
 	std::vector<Vertex> VertexVector;
-
-	//const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
-	//for (size_t i = 0; i < ModelArray.size(); ++i)
-	//{
-	//	const auto& vertexArray = ModelArray[i]->m_VertexArray;
-	//	for (size_t j = 0; j < vertexArray.size(); ++j)
-	//	{
-	//		Vertex v;
-	//		v.Pos = vertexArray[j].Pos;
-	//		v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	//		VertexVector.push_back(v);
-	//	}
-	//}
 
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
@@ -391,13 +370,11 @@ bool D3DClass::CreateVertexBuffer()
 			Vertex v;
 			v.Pos = vertexArray[j].Pos;
 			v.UV = vertexArray[j].UV;
-			//v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
 			VertexVector.push_back(v);
 		}
 	}
 
-	//int nVertexBufferSize = sizeof(vList);		// hhg
 	int nVertexBufferSize = VertexVector.size() * sizeof(Vertex);
 
 	m_device->CreateCommittedResource(
@@ -423,20 +400,19 @@ bool D3DClass::CreateVertexBuffer()
 	vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
 
 	D3D12_SUBRESOURCE_DATA vertexData = {};
-	//vertexData.pData = vList;						//hhg
 	vertexData.pData = VertexVector.data();
 	vertexData.RowPitch = nVertexBufferSize;
 	vertexData.SlicePitch = nVertexBufferSize;
 						
-	m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
+	//m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
 
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
 	UpdateSubresources(m_commandList.Get(), m_pVertexBuffer.Get(), vBufferUploadHeap, 0, 0, 1, &vertexData);
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 
-	m_commandList->Close();
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	//m_commandList->Close();
+	//ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	//m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 	m_VertexBufferView.StrideInBytes = sizeof(Vertex);
@@ -447,25 +423,7 @@ bool D3DClass::CreateVertexBuffer()
 
 bool D3DClass::CreateIndexBuffer()
 {
-	DWORD iList[] = {
-		// first quad (blue)
-		0, 1, 2, // first triangle
-		0, 3, 1, // second triangle
-	};
-
 	std::vector<int> copyIndexArray;
-
-	//const auto& ModelArray = gSystem->m_pResourceManager->m_ModelArray;
-	//for (size_t i = 0; i < ModelArray.size(); ++i)
-	//{
-	//	const auto& indexArray = ModelArray[i]->m_IndexArray;
-	//	for (size_t j = 0; j < indexArray.size(); ++j)
-	//	{
-	//		copyIndexArray.push_back(indexArray[j].a);
-	//		copyIndexArray.push_back(indexArray[j].b);
-	//		copyIndexArray.push_back(indexArray[j].c);
-	//	}
-	//}
 
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
@@ -478,7 +436,6 @@ bool D3DClass::CreateIndexBuffer()
 		}
 	}
 
-	//int nIndexBufferSize = sizeof(iList);				//hhg
 	int nIndexBufferSize = copyIndexArray.size() * sizeof(int);
 
 	m_device->CreateCommittedResource(
@@ -503,20 +460,19 @@ bool D3DClass::CreateIndexBuffer()
 	vBufferUploadHeap->SetName(L"Index Buffer Upload Resource Heap");
 
 	D3D12_SUBRESOURCE_DATA indexData = {};
-	//indexData.pData = iList;							//hhg
 	indexData.pData = copyIndexArray.data();
 	indexData.RowPitch = nIndexBufferSize;
 	indexData.SlicePitch = nIndexBufferSize;
 
-	m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
+	//m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
 
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
 	UpdateSubresources(m_commandList.Get(), m_pIndexBuffer.Get(), vBufferUploadHeap, 0, 0, 1, &indexData);
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 
-	m_commandList->Close();
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	//m_commandList->Close();
+	//ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	//m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	m_indexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
