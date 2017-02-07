@@ -28,10 +28,11 @@ using namespace DirectX::PackedVector;
 struct Vertex
 {
 	Vertex() {}
-	Vertex(float x, float y, float z, float r, float g, float b, float a) : Pos(x, y, z), color(r, g, b, z) {}
+	//Vertex(float x, float y, float z, float r, float g, float b, float a) : Pos(x, y, z), color(r, g, b, z) {}
 
 	XMFLOAT3 Pos;
-	XMFLOAT4 color;
+	XMFLOAT2 UV;
+	//XMFLOAT4 color;
 };
 
 struct ConstantBuffer
@@ -159,6 +160,9 @@ private:
 
 
 	std::unique_ptr<UploadBuffer<ConstantBuffer>> PassCB = nullptr;
+
+	std::unique_ptr<Texture> mTextures;
+	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 };
 
 #endif

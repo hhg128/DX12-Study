@@ -25,6 +25,10 @@ cbuffer cb0 : register(b0)
 	float deltaTime;
 };
 
+Texture2D gDiffuseMap : register(t0);
+
+SamplerState gsamLinearWrap       : register(s0);
+
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output;
@@ -40,5 +44,8 @@ VS_OUTPUT VS(VS_INPUT input)
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
 	//return input.color;
-	return float4(1.f, 0.f, 0.f, 0.f);
+	//float4 albedo = tex2D(DiffuseSampler, Input.mTexCoord);
+	float4 albedo = gDiffuseMap.Sample(gsamLinearWrap, input.mTexCoord);
+	return albedo;
+	//return float4(1.f, 0.f, 0.f, 0.f);
 }

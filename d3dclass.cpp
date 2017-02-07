@@ -144,6 +144,11 @@ bool D3DClass::Render()
 	auto passCB = PassCB->Resource();
 	m_commandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	m_commandList->SetGraphicsRootDescriptorTable(1, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
 	int baseVertexLocation = 0;
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
@@ -232,15 +237,27 @@ bool D3DClass::BuildInputLayout()
 
 bool D3DClass::BuildRootSignatures()
 {
-	CD3DX12_ROOT_PARAMETER constant;
-	constant.InitAsConstantBufferView(0, 0);
+	CD3DX12_DESCRIPTOR_RANGE texTable;
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+
+	CD3DX12_ROOT_PARAMETER constant[2];
+	constant[0].InitAsConstantBufferView(0, 0);
+	constant[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	// 지금은 '루트 시그니처'에 아무런 '루트 파라미터'가 없지만 나중을 위해서 일부러 넣었다.
 	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
-	slotRootParameter.push_back(constant);
+	slotRootParameter.push_back(constant[0]);
+	slotRootParameter.push_back(constant[1]);
+
+	const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
+		0, // shaderRegister
+		D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(slotRootParameter.size(), slotRootParameter.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	rootSignatureDesc.Init(slotRootParameter.size(), slotRootParameter.data(), 1, &linearWrap, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> signature = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -312,19 +329,19 @@ bool D3DClass::BuildPSO()
 
 bool D3DClass::CreateVertexBuffer()
 {
-	Vertex vList[] = {
-		// first quad (closer to camera, blue)
-		{ -0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-		{ 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-		{ -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
-		{ 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
+	//Vertex vList[] = {
+	//	// first quad (closer to camera, blue)
+	//	{ -0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
+	//	{ 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
+	//	{ -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
+	//	{ 0.5f,  0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f },
 
-		// second quad (further from camera, green)
-		{ -0.75f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
-		{ 0.0f,  0.0f, 0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
-		{ -0.75f,  0.0f, 0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
-		{ 0.0f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f }
-	};
+	//	// second quad (further from camera, green)
+	//	{ -0.75f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
+	//	{ 0.0f,  0.0f, 0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
+	//	{ -0.75f,  0.0f, 0.7f, 0.0f, 1.0f, 0.0f, 1.0f },
+	//	{ 0.0f,  0.75f,  0.7f, 0.0f, 1.0f, 0.0f, 1.0f }
+	//};
 
 	std::vector<Vertex> VertexVector;
 
@@ -349,7 +366,8 @@ bool D3DClass::CreateVertexBuffer()
 		{
 			Vertex v;
 			v.Pos = vertexArray[j].Pos;
-			v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+			v.UV = vertexArray[j].UV;
+			//v.color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
 			VertexVector.push_back(v);
 		}
@@ -879,14 +897,37 @@ void D3DClass::LoadTexture(std::string texFilename)
 	auto bricksTex = std::make_unique<Texture>();
 	bricksTex->Name = "bricksTex";
 	bricksTex->Filename = TEXT("bricks.dds");
+
+	mTextures = std::move(bricksTex);
 	
 	HRESULT hr;
-	hr = DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex->Filename.c_str(), bricksTex->Resource, bricksTex->UploadHeap);
+	hr = DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), mTextures->Filename.c_str(), mTextures->Resource, mTextures->UploadHeap);
 	if (FAILED(hr))
 	{
 		// DDS 파일이 아니면 로드 되지 않는다. 주의하자
 		return;
 	}
+
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap));
+
+	//
+	// Fill out the heap with actual descriptors.
+	//
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = mTextures->Resource->GetDesc().Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = mTextures->Resource->GetDesc().MipLevels;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	m_device->CreateShaderResourceView(mTextures->Resource.Get(), &srvDesc, hDescriptor);
 }
 
 //////////////////////////////////////////////////////////////////////////
