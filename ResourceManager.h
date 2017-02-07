@@ -14,6 +14,7 @@ public:
 	void Finalize();
 
 	void Load(std::string fbxFileName);
+	void LoadTexture(std::string fbxFileName);
 
 	void Export();
 

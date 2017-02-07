@@ -89,6 +89,8 @@ public:
 
 	void OnCamera(float fDelta);
 
+	void LoadTexture(std::string texFilename);
+
 private:
 	ComPtr<ID3DBlob> CompileShader(
 		const std::wstring& filename,

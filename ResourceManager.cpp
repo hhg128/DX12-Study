@@ -171,6 +171,14 @@ void CResourceManager::Load(std::string fbxFileName)
 	
 }
 
+void CResourceManager::LoadTexture(std::string fbxFileName)
+{
+	auto bricksTex = std::make_unique<Texture>();
+	bricksTex->Name = "bricksTex";
+	bricksTex->Filename = L"../../Textures/bricks.dds";
+	//DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(), mCommandList.Get(), bricksTex->Filename.c_str(), bricksTex->Resource, bricksTex->UploadHeap);
+}
+
 void CResourceManager::Export()
 {
 }

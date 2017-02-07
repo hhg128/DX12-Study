@@ -266,6 +266,8 @@ bool D3DClass::BuildGeometry()
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 
+	LoadTexture("texture");
+
 	return true;
 }
 
@@ -870,6 +872,21 @@ void D3DClass::OnCamera(float fDelta)
 	memcpy(destination, &constantBuffer, sizeof(ConstantBuffer));
 
 	PassCB->CopyData(0, constantBuffer);
+}
+
+void D3DClass::LoadTexture(std::string texFilename)
+{
+	auto bricksTex = std::make_unique<Texture>();
+	bricksTex->Name = "bricksTex";
+	bricksTex->Filename = TEXT("bricks.dds");
+	
+	HRESULT hr;
+	hr = DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex->Filename.c_str(), bricksTex->Resource, bricksTex->UploadHeap);
+	if (FAILED(hr))
+	{
+		// DDS 파일이 아니면 로드 되지 않는다. 주의하자
+		return;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
