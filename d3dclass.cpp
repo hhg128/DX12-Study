@@ -114,13 +114,11 @@ bool D3DClass::Render()
 
 	// Record commands in the command list now.
 	// Start by setting the resource barrier.
-	m_commandList->ResourceBarrier(1, 
-		&CD3DX12_RESOURCE_BARRIER::Transition(m_backBufferRenderTarget[m_CurrentBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_backBufferRenderTarget[m_CurrentBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 
 	int renderTargetViewDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_renderTargetViewHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBufferIndex, renderTargetViewDescriptorSize);
-
 	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_DepthStencilViewHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Set the back buffer as the render target.
@@ -146,13 +144,7 @@ bool D3DClass::Render()
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
 	m_commandList->SetGraphicsRootDescriptorTable(1, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-	//ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
-	//m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-
-	//m_commandList->SetGraphicsRootDescriptorTable(0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	int baseVertexLocation = 0;
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
@@ -167,52 +159,22 @@ bool D3DClass::Render()
 	// something end
 	//////////////////////////////////////////////////////////////////////////
 
-	m_commandList->ResourceBarrier(1,
-		&CD3DX12_RESOURCE_BARRIER::Transition(m_backBufferRenderTarget[m_CurrentBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_backBufferRenderTarget[m_CurrentBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	// Close the list of commands.
 	result = m_commandList->Close();
-	if(FAILED(result))
-	{
-		return false;
-	}
-
-	// Load the command list array (only one command list for now).
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-
-	// Execute the list of commands.
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-
-	// Present as fast as possible.
-	result = m_swapChain->Present(0, 0);
 	if (FAILED(result))
 	{
 		return false;
 	}
 
+	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	m_swapChain->Present(0, 0);
+
 	//////////////////////////////////////////////////////////////////////////
-
-	// Signal and increment the fence value.
-	unsigned long long fenceToWaitFor;
-	fenceToWaitFor = m_fenceValue;
-	result = m_commandQueue->Signal(m_fence.Get(), fenceToWaitFor);
-	if(FAILED(result))
-	{
-		return false;
-	}
-	m_fenceValue++;
-
-	// Wait until the GPU is done rendering.
-	if(m_fence->GetCompletedValue() < fenceToWaitFor)
-	{
-		result = m_fence->SetEventOnCompletion(fenceToWaitFor, m_fenceEvent);
-		if(FAILED(result))
-		{
-			return false;
-		}
-		WaitForSingleObject(m_fenceEvent, INFINITE);
-	}
+	FlushCommandQueue();
 
 	// Alternate the back buffer index back and forth between 0 and 1 each frame.
 	m_CurrentBufferIndex == 0 ? m_CurrentBufferIndex = 1 : m_CurrentBufferIndex = 0;
@@ -234,7 +196,6 @@ bool D3DClass::BuildInputLayout()
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		//{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
 	return true;
@@ -249,37 +210,14 @@ bool D3DClass::BuildRootSignatures()
 	constant[0].InitAsConstantBufferView(0, 0);
 	constant[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	// 지금은 '루트 시그니처'에 아무런 '루트 파라미터'가 없지만 나중을 위해서 일부러 넣었다.
-	std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameter;
-	slotRootParameter.push_back(constant[0]);
-	slotRootParameter.push_back(constant[1]);
-
-	//const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-	//	0, // shaderRegister
-	//	D3D12_FILTER_MIN_MAG_MIP_LINEAR, // filter
-	//	D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-	//	D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-	//	D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
-
-	D3D12_STATIC_SAMPLER_DESC sampler = {};
-	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.MipLODBias = 0;
-	sampler.MaxAnisotropy = 0;
-	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-	sampler.MinLOD = 0.0f;
-	sampler.MaxLOD = D3D12_FLOAT32_MAX;
-	sampler.ShaderRegister = 0;
-	sampler.RegisterSpace = 0;
-	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-
-	//CD3DX12_STATIC_SAMPLER_DESC sampler[1] = { linearWrap };
+	const CD3DX12_STATIC_SAMPLER_DESC sampler(
+		0, // shaderRegister
+		D3D12_FILTER_ANISOTROPIC, // filter
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	//rootSignatureDesc.Init(slotRootParameter.size(), slotRootParameter.data(), 1, sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	rootSignatureDesc.Init(_countof(constant), constant, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	ComPtr<ID3DBlob> signature = nullptr;
@@ -313,8 +251,6 @@ bool D3DClass::BuildGeometry()
 	m_commandList->Close();
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	//CreateSRVBufferView();
 
 	return true;
 }
@@ -404,15 +340,9 @@ bool D3DClass::CreateVertexBuffer()
 	vertexData.RowPitch = nVertexBufferSize;
 	vertexData.SlicePitch = nVertexBufferSize;
 						
-	//m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
-
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
 	UpdateSubresources(m_commandList.Get(), m_pVertexBuffer.Get(), vBufferUploadHeap, 0, 0, 1, &vertexData);
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
-
-	//m_commandList->Close();
-	//ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	//m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 	m_VertexBufferView.StrideInBytes = sizeof(Vertex);
@@ -464,15 +394,9 @@ bool D3DClass::CreateIndexBuffer()
 	indexData.RowPitch = nIndexBufferSize;
 	indexData.SlicePitch = nIndexBufferSize;
 
-	//m_commandList->Reset(m_commandAllocator[m_CurrentBufferIndex].Get(), nullptr);
-
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
 	UpdateSubresources(m_commandList.Get(), m_pIndexBuffer.Get(), vBufferUploadHeap, 0, 0, 1, &indexData);
 	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
-
-	//m_commandList->Close();
-	//ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	//m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	m_indexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
@@ -903,127 +827,28 @@ void D3DClass::LoadTexture(std::string texFilename)
 	m_device->CreateShaderResourceView(mTextures->Resource.Get(), &srvDesc, hDescriptor);
 }
 
-void D3DClass::CreateSRVBufferView()
+void D3DClass::FlushCommandQueue()
 {
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap));
+	// Advance the fence value to mark commands up to this fence point.
+	mCurrentFence++;
 
-	ComPtr<ID3D12Resource> textureUploadHeap;
+	// Add an instruction to the command queue to set a new fence point.  Because we 
+	// are on the GPU timeline, the new fence point won't be set until the GPU finishes
+	// processing all the commands prior to this Signal().
+	ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), mCurrentFence));
 
-	// Describe and create a Texture2D.
-	D3D12_RESOURCE_DESC textureDesc = {};
-	textureDesc.MipLevels = 1;
-	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	textureDesc.Width = TextureWidth;
-	textureDesc.Height = TextureHeight;
-	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-	textureDesc.DepthOrArraySize = 1;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&textureDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST,
-		nullptr,
-		IID_PPV_ARGS(&m_texture)));
-
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_texture.Get(), 0, 1);
-
-	// Create the GPU upload buffer.
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&textureUploadHeap)));
-
-	// Copy data to the intermediate upload heap and then schedule a copy 
-	// from the upload heap to the Texture2D.
-	std::vector<UINT8> texture = GenerateTextureData();
-
-	D3D12_SUBRESOURCE_DATA textureData = {};
-	textureData.pData = &texture[0];
-	textureData.RowPitch = TextureWidth * TexturePixelSize;
-	textureData.SlicePitch = textureData.RowPitch * TextureHeight;
-
-	UpdateSubresources(m_commandList.Get(), m_texture.Get(), textureUploadHeap.Get(), 0, 0, 1, &textureData);
-	m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_texture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
-
-	m_commandList->Close();
-	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-	m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	// Signal and increment the fence value.
-	unsigned long long fenceToWaitFor;
-	fenceToWaitFor = m_fenceValue;
-	HRESULT result = m_commandQueue->Signal(m_fence.Get(), fenceToWaitFor);
-	if (FAILED(result))
+	// Wait until the GPU has completed commands up to this fence point.
+	if (m_fence->GetCompletedValue() < mCurrentFence)
 	{
-		return;
+		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+
+		// Fire event when GPU hits current fence.  
+		ThrowIfFailed(m_fence->SetEventOnCompletion(mCurrentFence, eventHandle));
+
+		// Wait until the GPU hits current fence event is fired.
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
 	}
-	m_fenceValue++;
-
-	// Wait until the GPU is done rendering.
-	if (m_fence->GetCompletedValue() < fenceToWaitFor)
-	{
-		result = m_fence->SetEventOnCompletion(fenceToWaitFor, m_fenceEvent);
-		if (FAILED(result))
-		{
-			return;
-		}
-		WaitForSingleObject(m_fenceEvent, INFINITE);
-	}
-
-	// Describe and create a SRV for the texture.
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = textureDesc.Format;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 1;
-	m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-}
-
-std::vector<UINT8> D3DClass::GenerateTextureData()
-{
-	const UINT rowPitch = TextureWidth * TexturePixelSize;
-	const UINT cellPitch = rowPitch >> 3;		// The width of a cell in the checkboard texture.
-	const UINT cellHeight = TextureWidth >> 3;	// The height of a cell in the checkerboard texture.
-	const UINT textureSize = rowPitch * TextureHeight;
-
-	std::vector<UINT8> data(textureSize);
-	UINT8* pData = &data[0];
-
-	for (UINT n = 0; n < textureSize; n += TexturePixelSize)
-	{
-		UINT x = n % rowPitch;
-		UINT y = n / rowPitch;
-		UINT i = x / cellPitch;
-		UINT j = y / cellHeight;
-
-		if (i % 2 == j % 2)
-		{
-			pData[n] = 0x00;		// R
-			pData[n + 1] = 0x00;	// G
-			pData[n + 2] = 0x00;	// B
-			pData[n + 3] = 0xff;	// A
-		}
-		else
-		{
-			pData[n] = 0xff;		// R
-			pData[n + 1] = 0xff;	// G
-			pData[n + 2] = 0xff;	// B
-			pData[n + 3] = 0xff;	// A
-		}
-	}
-
-	return data;
 }
 
 //////////////////////////////////////////////////////////////////////////

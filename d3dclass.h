@@ -92,12 +92,8 @@ public:
 
 	void LoadTexture(std::string texFilename);
 
-	static const UINT TextureWidth = 256;
-	static const UINT TextureHeight = 256;
-	static const UINT TexturePixelSize = 4;	// The number of bytes used to represent a pixel in the texture.
-
-	void CreateSRVBufferView();
-	std::vector<UINT8> GenerateTextureData();
+	UINT64 mCurrentFence = 0;
+	void FlushCommandQueue();
 
 private:
 	ComPtr<ID3DBlob> CompileShader(
