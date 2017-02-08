@@ -100,9 +100,7 @@ void CResourceManager::Load(std::string fbxFileName)
 
 			MeshClass* meshClass = new MeshClass;
 
-			//FbxVector4 pos1 = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-			//FbxVector4 rot1 = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-			//FbxVector4 scale1 = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+			FbxNode* p = pNode->GetParent();
 
 			FbxDouble3 pos = pNode->LclTranslation.Get();
 			FbxDouble3 rot = pNode->LclRotation.Get();
@@ -127,60 +125,69 @@ void CResourceManager::Load(std::string fbxFileName)
 				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
 				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
 
-				// 일단 텍스처는 하나만 생각한다
-				XMFLOAT2 outUV;
-
-				FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
-				if (vertexUV)
-				{
-					switch (vertexUV->GetMappingMode())
-					{
-					case FbxGeometryElement::eByControlPoint:
-						switch (vertexUV->GetReferenceMode())
-						{
-						case FbxGeometryElement::eDirect:
-						{
-							outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[0]);
-							outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[1]);
-						}
-						break;
-
-						case FbxGeometryElement::eIndexToDirect:
-						{
-							int index = vertexUV->GetIndexArray().GetAt(i);
-							outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[0]);
-							outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[1]);
-						}
-						break;
-
-						default:
-							throw std::exception("Invalid Reference");
-						}
-						break;
-
-					case FbxGeometryElement::eByPolygonVertex:
-						switch (vertexUV->GetReferenceMode())
-						{
-						case FbxGeometryElement::eDirect:
-						case FbxGeometryElement::eIndexToDirect:
-						{
-							outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[0]);
-							outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[1]);
-						}
-						break;
-
-						default:
-							throw std::exception("Invalid Reference");
-						}
-						break;
-					}
-				}
-
 				MeshClass::VertexType vertex;
 				vertex.Pos = currPosition;
-				vertex.UV.x = 1.f - outUV.x;
-				vertex.UV.y = 1.f - outUV.y;
 				meshClass->m_VertexArray.push_back(vertex);
+			}
+
+			for (int i = 0; i < nTriangleCount; ++i)
+			{
+				for (int j = 0; j < 3; ++j)
+				{
+					XMFLOAT2 outUV;
+
+					FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
+					if (vertexUV)
+					{
+						switch (vertexUV->GetMappingMode())
+						{
+						case FbxGeometryElement::eByControlPoint:
+							switch (vertexUV->GetReferenceMode())
+							{
+							case FbxGeometryElement::eDirect:
+							{
+								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[0]);
+								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[1]);
+							}
+							break;
+
+							case FbxGeometryElement::eIndexToDirect:
+							{
+								int index = vertexUV->GetIndexArray().GetAt(i);
+								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[0]);
+								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[1]);
+							}
+							break;
+
+							default:
+								throw std::exception("Invalid Reference");
+							}
+							break;
+
+						case FbxGeometryElement::eByPolygonVertex:
+							switch (vertexUV->GetReferenceMode())
+							{
+							case FbxGeometryElement::eDirect:
+							case FbxGeometryElement::eIndexToDirect:
+							{
+								int tIndex = pMesh->GetTextureUVIndex(i, j);
+								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(tIndex).mData[0]);
+								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(tIndex).mData[1]);
+							}
+							break;
+
+							default:
+								throw std::exception("Invalid Reference");
+							}
+							break;
+						}
+					}
+
+					int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
+					MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
+					vertex.UV.x = outUV.x;
+					vertex.UV.y = 1.f - outUV.y;
+				}
 			}
 
 			// Index List

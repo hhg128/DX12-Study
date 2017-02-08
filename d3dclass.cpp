@@ -163,21 +163,23 @@ bool D3DClass::Render()
 
 			
 
-			//if (a != b)
-			//{
-			//	baseVertexLocation += vertexCount;
-			//	baseIndexLocation += triangleCount * 3;
-			//	a++;
-			//	continue;;
-			//}
-			//a++;
+			if (a != b)
+			{
+				baseVertexLocation += vertexCount;
+				baseIndexLocation += triangleCount * 3;
+				a++;
+				continue;;
+			}
+			a++;
 			
 			
 			
 			PerObjectBuffer perObjectBuffer = {};
 			XMMATRIX pos = XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z);
 			XMMATRIX scale = XMMatrixScaling(mesh->m_vScale.x, mesh->m_vScale.y, mesh->m_vScale.z);
-			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(pos));
+
+
+			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixMultiply(pos, scale)));
 			PerObjectCB->CopyData(i, perObjectBuffer);
 
 			UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PerObjectBuffer));
@@ -188,6 +190,8 @@ bool D3DClass::Render()
 			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, baseIndexLocation, baseVertexLocation, 0);
 			baseVertexLocation += vertexCount;
 			baseIndexLocation += triangleCount * 3;
+
+			
 		}	
 	}
 
@@ -249,9 +253,9 @@ bool D3DClass::BuildRootSignatures()
 	const CD3DX12_STATIC_SAMPLER_DESC sampler(
 		0, // shaderRegister
 		D3D12_FILTER_ANISOTROPIC, // filter
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-		D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init(_countof(constant), constant, 1, &sampler, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
