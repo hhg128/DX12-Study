@@ -2,16 +2,13 @@
 
 using namespace DirectX;
 
-class ModelClass
+class MeshClass
 {
 public:
-	ModelClass();
-	~ModelClass();
-
-	void DrawIndexedInstanced();
+	MeshClass();
+	~MeshClass();
 
 public:
-
 	struct VertexType
 	{
 		XMFLOAT3 Pos;
@@ -25,8 +22,15 @@ public:
 
 	std::vector<IndexType>		m_IndexArray;
 	std::vector<VertexType>		m_VertexArray;
+};
+
+class ModelClass
+{
+public:
+	ModelClass();
+	~ModelClass();
 
 public:
-	int VertexBufferSize() { return m_VertexArray.size() * sizeof(VertexType); }
+	std::vector<MeshClass*>		m_MeshArray;
 };
 

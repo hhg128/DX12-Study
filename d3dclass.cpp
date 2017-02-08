@@ -30,7 +30,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	CreateDepthStencilViewDescriptorHeap();
 	CreateDepthStencilView();
 
-	CreateConstantBufferViewDescriptorHeap();
+	//CreateConstantBufferViewDescriptorHeap();
 	CreateConstantBufferView();
 
 	BuildRootSignatures();
@@ -59,11 +59,11 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_ScissorRect.bottom = screenHeight;
 	
 	//gSystem->m_pResourceManager->Load("plane.fbx");
-	//gSystem->m_pResourceManager->Load("plane.fbx");
+	//gSystem->m_pResourceManager->Load("plane_bricks_dds.fbx");
 	//gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 	//gSystem->m_pResourceManager->Load("humanoid.fbx");
-	//gSystem->m_pResourceManager->Load("BG.fbx");
-	gSystem->m_pResourceManager->Load("Cube FBX\\cube_with_texture.fbx");
+	gSystem->m_pResourceManager->Load("BG.fbx");
+	//gSystem->m_pResourceManager->Load("Cube FBX\\cube_with_texture.fbx");
 
 	return true;
 }
@@ -146,14 +146,21 @@ bool D3DClass::Render()
 	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	m_commandList->SetGraphicsRootDescriptorTable(1, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
+	auto perObjectCB = PerObjectCB->Resource();
+	m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress());
+
 	int baseVertexLocation = 0;
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		int vertexCount = iter.second->m_VertexArray.size();
-		int triangleCount = iter.second->m_IndexArray.size();
+		auto& meshArray = iter.second->m_MeshArray;
+		for(auto& mesh : meshArray)
+		{
+			int vertexCount = mesh->m_VertexArray.size();
+			int triangleCount =mesh->m_IndexArray.size();
 
-		m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, 0, baseVertexLocation, 0);
-		baseVertexLocation += vertexCount;
+			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, 0, baseVertexLocation, 0);
+			baseVertexLocation += vertexCount;
+		}	
 	}
 
 	// something end
@@ -300,14 +307,18 @@ bool D3DClass::CreateVertexBuffer()
 
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		const auto& vertexArray = iter.second->m_VertexArray;
-		for (size_t j = 0; j < vertexArray.size(); ++j)
+		const auto& meshArray = iter.second->m_MeshArray;
+		for (auto& mesh : meshArray)
 		{
-			Vertex v;
-			v.Pos = vertexArray[j].Pos;
-			v.UV = vertexArray[j].UV;
+			const auto& vertexArray = mesh->m_VertexArray;
+			for (size_t j = 0; j < vertexArray.size(); ++j)
+			{
+				Vertex v;
+				v.Pos = vertexArray[j].Pos;
+				v.UV = vertexArray[j].UV;
 
-			VertexVector.push_back(v);
+				VertexVector.push_back(v);
+			}
 		}
 	}
 
@@ -357,12 +368,16 @@ bool D3DClass::CreateIndexBuffer()
 
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		const auto& indexArray = iter.second->m_IndexArray;
-		for (size_t j = 0; j < indexArray.size(); ++j)
+		const auto& meshArray = iter.second->m_MeshArray;
+		for (auto& mesh : meshArray)
 		{
-			copyIndexArray.push_back(indexArray[j].a);
-			copyIndexArray.push_back(indexArray[j].b);
-			copyIndexArray.push_back(indexArray[j].c);
+			auto& indexArray = mesh->m_IndexArray;
+			for (size_t j = 0; j < indexArray.size(); ++j)
+			{
+				copyIndexArray.push_back(indexArray[j].a);
+				copyIndexArray.push_back(indexArray[j].b);
+				copyIndexArray.push_back(indexArray[j].c);
+			}
 		}
 	}
 
@@ -413,7 +428,7 @@ bool D3DClass::CreateConstantBufferViewDescriptorHeap()
 	D3D12_DESCRIPTOR_HEAP_DESC constantBufferViewHeapDesc = {};
 
 	// Set the number of descriptors to two for our two back buffers.  Also set the heap type to render target views.
-	constantBufferViewHeapDesc.NumDescriptors = 1;
+	constantBufferViewHeapDesc.NumDescriptors = 2;
 	constantBufferViewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	constantBufferViewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
@@ -430,34 +445,7 @@ bool D3DClass::CreateConstantBufferViewDescriptorHeap()
 bool D3DClass::CreateConstantBufferView()
 {
 	PassCB = std::make_unique<UploadBuffer<ConstantBuffer>>(m_device.Get(), 1, true);
-
-	HRESULT hr;
-
-	const UINT constantBufferSize = sizeof(ConstantBuffer) * m_nBackBufferCount;
-
-	ThrowIfFailed(m_device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&m_pConstantBuffer)
-	));
-
-	m_pConstantBuffer->SetName(TEXT("Constant Buffer!!"));
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-	cbvDesc.BufferLocation = m_pConstantBuffer->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = (sizeof(m_pConstantBuffer) + 255) & ~255;	// CB size is required to be 256-byte aligned.
-	m_device->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
-
-	CD3DX12_RANGE readRange(0, 0);		// We do not intend to read from this resource on the CPU.
-	hr = m_pConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pConstantBufferData));
-	if (FAILED(hr))
-	{
-		return false;
-	}
-	ZeroMemory(m_pConstantBufferData, constantBufferSize);
+	PerObjectCB = std::make_unique<UploadBuffer<PerObjectBuffer>>(m_device.Get(), 1, true);
 
 	return true;
 }
@@ -782,18 +770,24 @@ void D3DClass::OnCamera(float fDelta)
 
 	ConstantBuffer constantBuffer = {};
 
+	
 	XMMATRIX lookMat = m_Camera.GetView();
 	XMMATRIX projMat = m_Camera.GetProj();
 	
+
+	XMStoreFloat4x4(&constantBuffer.world, XMMatrixTranspose(XMMatrixTranslation(0.f, 0.f, 0.f)));
 	XMStoreFloat4x4(&constantBuffer.view, XMMatrixTranspose(lookMat));
 	XMStoreFloat4x4(&constantBuffer.proj, XMMatrixTranspose(projMat));
 
-	constantBuffer.fDeltaTime = 109.f;
-
-	UINT8* destination = m_pConstantBufferData + sizeof(ConstantBuffer) * m_CurrentBufferIndex;
-	memcpy(destination, &constantBuffer, sizeof(ConstantBuffer));
-
 	PassCB->CopyData(0, constantBuffer);
+	
+
+	//////////////////////////////////////////////////////////////////////////
+
+	PerObjectBuffer perObjectBuffer = {};
+	XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixTranslation(10.f, 10.f, 120.f)));
+
+	PerObjectCB->CopyData(0, perObjectBuffer);
 }
 
 void D3DClass::LoadTexture(std::string texFilename)

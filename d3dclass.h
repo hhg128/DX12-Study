@@ -35,15 +35,20 @@ struct Vertex
 	//XMFLOAT4 color;
 };
 
+struct PerObjectBuffer
+{
+	XMFLOAT4X4 world;
+};
+
 struct ConstantBuffer
 {
+	XMFLOAT4X4 world;
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 proj;
 
-	float fDeltaTime;
 	// Constant buffers are 256-byte aligned in GPU memory. Padding is added
 	// for convenience when computing the struct's size.
-	float padding[31];
+	//float dummy[32];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +168,7 @@ private:
 
 
 	std::unique_ptr<UploadBuffer<ConstantBuffer>> PassCB = nullptr;
+	std::unique_ptr<UploadBuffer<PerObjectBuffer>> PerObjectCB = nullptr;
 
 	std::unique_ptr<Texture> mTextures;
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;

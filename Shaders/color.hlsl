@@ -18,9 +18,14 @@ struct VS_OUTPUT
 
 cbuffer cb0 : register(b0)
 {
+	float4x4 world;
 	float4x4 view;
 	float4x4 proj;
-	float deltaTime;
+};
+
+cbuffer cb1 : register(b1)
+{
+	float4x4 world2;
 };
 
 Texture2D gDiffuseMap : register(t0);
@@ -31,6 +36,8 @@ VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.pos = float4(input.pos, 1.0f);
+	output.pos = mul(output.pos, world);
+	//output.pos = mul(output.pos, world2);
 	output.pos = mul(output.pos, view);
 	output.pos = mul(output.pos, proj);
 	

@@ -72,19 +72,38 @@ void CResourceManager::Load(std::string fbxFileName)
 		OurAxisSystem.ConvertScene(pScene);
 	}
 
-	
-	const int lNodeCount = pScene->GetSrcObjectCount<FbxNode>();
-	for (int lIndex = 0; lIndex < lNodeCount; lIndex++)
+	// texture 구하기
+	const int nTextureCount = pScene->GetTextureCount();
+	for (int i = 0; i < nTextureCount; ++i)
 	{
-		FbxNode* pNode = pScene->GetSrcObject<FbxNode>(lIndex);
+		FbxTexture* pTexture = pScene->GetTexture(i);
+		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
+		std::string textureFileName = pFileTexture->GetFileName();
 
+		size_t pos = textureFileName.rfind("\\");
+		textureFileName = textureFileName.substr(pos+1);
+	}
+	
+	ModelClass* modelClass = new ModelClass;
+	m_ModelMap[fbxFileName] = modelClass;
+
+	// Mesh 구하기
+	const int nNodeCount = pScene->GetSrcObjectCount<FbxNode>();
+	for (int nIndex = 0; nIndex < nNodeCount; nIndex++)
+	{
+		FbxNode* pNode = pScene->GetSrcObject<FbxNode>(nIndex);
 		if (pNode->GetNodeAttribute() && pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
 			FbxMesh* pMesh = pNode->GetMesh();
 			int nControlPointCount = pMesh->GetControlPointsCount();
 			int nTriangleCount = pMesh->GetPolygonCount();
 
-			ModelClass* model = new ModelClass;
+			MeshClass* modelclass = new MeshClass;
+
+			// 각 메시 별로 RST가 있음
+			pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+			pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+			pNode->GetGeometricRotation(FbxNode::eSourcePivot);
 
 			// Vertex List
 			for (int i = 0; i < nControlPointCount; ++i)
@@ -144,11 +163,11 @@ void CResourceManager::Load(std::string fbxFileName)
 					}
 				}
 
-				ModelClass::VertexType vertex;
+				MeshClass::VertexType vertex;
 				vertex.Pos = currPosition;
 				vertex.UV.x = 1.f - outUV.x;
 				vertex.UV.y = 1.f - outUV.y;
-				model->m_VertexArray.push_back(vertex);
+				modelclass->m_VertexArray.push_back(vertex);
 			}
 
 			// Index List
@@ -159,17 +178,16 @@ void CResourceManager::Load(std::string fbxFileName)
 				int indexC = pMesh->GetPolygonVertex(i, 1);
 
 				// Max 는 CCW로 인덱싱 되어 있음, D3D는 CW가 기본임, 그래서 순서를 바꿔줌
-				ModelClass::IndexType index;
+				MeshClass::IndexType index;
 				index.a = indexA;
 				index.b = indexB;
 				index.c = indexC;
-				model->m_IndexArray.push_back(index);
+				modelclass->m_IndexArray.push_back(index);
 			}
 
-			m_ModelMap[fbxFileName] = model;
+			m_ModelMap[fbxFileName]->m_MeshArray.push_back(modelclass);
 		}
 	}
-	
 }
 
 void CResourceManager::LoadTexture(std::string fbxFileName)
