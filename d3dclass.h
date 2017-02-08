@@ -38,6 +38,7 @@ struct Vertex
 struct PerObjectBuffer
 {
 	XMFLOAT4X4 world;
+	UINT texIndex;
 };
 
 struct ConstantBuffer
@@ -170,11 +171,19 @@ private:
 	std::unique_ptr<UploadBuffer<ConstantBuffer>> PassCB = nullptr;
 	std::unique_ptr<UploadBuffer<PerObjectBuffer>> PerObjectCB = nullptr;
 
-	std::unique_ptr<Texture> mTextures;
+	std::unique_ptr<Texture> mTextures1;
+	std::unique_ptr<Texture> mTextures2;
+	std::unique_ptr<Texture> mTextures3;
+	std::unique_ptr<Texture> mTextures4;
+	std::unique_ptr<Texture> mTextures5;
+	std::unique_ptr<Texture> mTextures6;
+
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 
 	ComPtr<ID3D12Resource> m_texture;
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
+
+	UINT mCbvSrvDescriptorSize = 0;
 };
 
 #endif

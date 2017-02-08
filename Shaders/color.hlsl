@@ -26,9 +26,10 @@ cbuffer cb0 : register(b0)
 cbuffer cb1 : register(b1)
 {
 	float4x4 world2;
+	uint index;
 };
 
-Texture2D gDiffuseMap : register(t0);
+Texture2D gDiffuseMap[6] : register(t0);
 
 SamplerState gsamLinearWrap : register(s0);
 
@@ -48,7 +49,7 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-	float4 albedo = gDiffuseMap.Sample(gsamLinearWrap, input.mTexCoord);
+	float4 albedo = gDiffuseMap[index].Sample(gsamLinearWrap, input.mTexCoord);
 	return albedo;
 
 	//return float4(0.f, 0.f, 0.f, 0.f);

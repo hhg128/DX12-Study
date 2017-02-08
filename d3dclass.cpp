@@ -143,9 +143,11 @@ bool D3DClass::Render()
 	auto passCB = PassCB->Resource();
 	m_commandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
+
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
 
 	int b = 0;
 	int baseVertexLocation = 0;
@@ -163,14 +165,14 @@ bool D3DClass::Render()
 
 			
 
-			if (a != b)
-			{
-				baseVertexLocation += vertexCount;
-				baseIndexLocation += triangleCount * 3;
-				a++;
-				continue;;
-			}
-			a++;
+			//if (a != b)
+			//{
+			//	baseVertexLocation += vertexCount;
+			//	baseIndexLocation += triangleCount * 3;
+			//	a++;
+			//	continue;;
+			//}
+			//a++;
 			
 			
 			
@@ -180,13 +182,20 @@ bool D3DClass::Render()
 
 
 			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixMultiply(pos, scale)));
+			perObjectBuffer.texIndex = i;
 			PerObjectCB->CopyData(i, perObjectBuffer);
+
 
 			UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PerObjectBuffer));
 
 			auto perObjectCB = PerObjectCB->Resource();
 			m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress() + i * objCBByteSize);
 			
+
+			//ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+			//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+			//m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
 			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, baseIndexLocation, baseVertexLocation, 0);
 			baseVertexLocation += vertexCount;
 			baseIndexLocation += triangleCount * 3;
@@ -223,8 +232,8 @@ bool D3DClass::Render()
 
 bool D3DClass::BuildShader()
 {
-	mvsByteCode = CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_0");
-	mpsByteCode = CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_0");
+	mvsByteCode = CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_1");
+	mpsByteCode = CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_1");
 
 	return true;
 }
@@ -243,7 +252,7 @@ bool D3DClass::BuildInputLayout()
 bool D3DClass::BuildRootSignatures()
 {
 	CD3DX12_DESCRIPTOR_RANGE texTable;
-	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0, 0);
 
 	CD3DX12_ROOT_PARAMETER constant[3];
 	constant[0].InitAsConstantBufferView(0, 0);
@@ -478,7 +487,7 @@ bool D3DClass::CreateConstantBufferViewDescriptorHeap()
 bool D3DClass::CreateConstantBufferView()
 {
 	PassCB = std::make_unique<UploadBuffer<ConstantBuffer>>(m_device.Get(), 1, true);
-	PerObjectCB = std::make_unique<UploadBuffer<PerObjectBuffer>>(m_device.Get(), 2, true);
+	PerObjectCB = std::make_unique<UploadBuffer<PerObjectBuffer>>(m_device.Get(), 1, true);
 
 	return true;
 }
@@ -817,16 +826,41 @@ void D3DClass::OnCamera(float fDelta)
 
 void D3DClass::LoadTexture(std::string texFilename)
 {
-	auto bricksTex = std::make_unique<Texture>();
-	bricksTex->Name = "bricksTex";
-	bricksTex->Filename = TEXT("12c14c70.dds");
+	auto bricksTex1 = std::make_unique<Texture>();
+	bricksTex1->Name = "bricksTex1";
+	bricksTex1->Filename = TEXT("12c14c70.dds");
 
-	mTextures = std::move(bricksTex);
+	auto bricksTex2 = std::make_unique<Texture>();
+	bricksTex2->Name = "bricksTex2";
+	bricksTex2->Filename = TEXT("13932ef0.dds");
+
+	auto bricksTex3 = std::make_unique<Texture>();
+	bricksTex3->Name = "bricksTex3";
+	bricksTex3->Filename = TEXT("19d89130.dds");
+
+	auto bricksTex4 = std::make_unique<Texture>();
+	bricksTex4->Name = "bricksTex4";
+	bricksTex4->Filename = TEXT("16cecd10.dds");
+
+	auto bricksTex5 = std::make_unique<Texture>();
+	bricksTex5->Name = "bricksTex5";
+	bricksTex5->Filename = TEXT("16c2e0d0.dds");
+
+	auto bricksTex6 = std::make_unique<Texture>();
+	bricksTex6->Name = "bricksTex6";
+	bricksTex6->Filename = TEXT("12dbd6d0.dds");
 	
-	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), mTextures->Filename.c_str(), mTextures->Resource, mTextures->UploadHeap));
+	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex1->Filename.c_str(), bricksTex1->Resource, bricksTex1->UploadHeap));
+	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex2->Filename.c_str(), bricksTex2->Resource, bricksTex2->UploadHeap));
+	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex3->Filename.c_str(), bricksTex3->Resource, bricksTex3->UploadHeap));
+	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex4->Filename.c_str(), bricksTex4->Resource, bricksTex4->UploadHeap));
+	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex5->Filename.c_str(), bricksTex5->Resource, bricksTex5->UploadHeap));
+	AssertIfFailed(DirectX::CreateDDSTextureFromFile12(m_device.Get(), m_commandList.Get(), bricksTex6->Filename.c_str(), bricksTex6->Resource, bricksTex6->UploadHeap));
+
+	mCbvSrvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.NumDescriptors = 6;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	m_device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap));
@@ -838,12 +872,50 @@ void D3DClass::LoadTexture(std::string texFilename)
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = mTextures->Resource->GetDesc().Format;
+	srvDesc.Format = bricksTex1->Resource->GetDesc().Format;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = 0;
-	srvDesc.Texture2D.MipLevels = mTextures->Resource->GetDesc().MipLevels;
+	srvDesc.Texture2D.MipLevels = bricksTex1->Resource->GetDesc().MipLevels;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-	m_device->CreateShaderResourceView(mTextures->Resource.Get(), &srvDesc, hDescriptor);
+	m_device->CreateShaderResourceView(bricksTex1->Resource.Get(), &srvDesc, hDescriptor);
+
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = bricksTex2->Resource->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = bricksTex2->Resource->GetDesc().MipLevels;
+	m_device->CreateShaderResourceView(bricksTex2->Resource.Get(), &srvDesc, hDescriptor);
+
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = bricksTex3->Resource->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = bricksTex3->Resource->GetDesc().MipLevels;
+	m_device->CreateShaderResourceView(bricksTex3->Resource.Get(), &srvDesc, hDescriptor);
+
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = bricksTex4->Resource->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = bricksTex4->Resource->GetDesc().MipLevels;
+	m_device->CreateShaderResourceView(bricksTex4->Resource.Get(), &srvDesc, hDescriptor);
+
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = bricksTex5->Resource->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = bricksTex5->Resource->GetDesc().MipLevels;
+	m_device->CreateShaderResourceView(bricksTex5->Resource.Get(), &srvDesc, hDescriptor);
+
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = bricksTex6->Resource->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = bricksTex6->Resource->GetDesc().MipLevels;
+	m_device->CreateShaderResourceView(bricksTex6->Resource.Get(), &srvDesc, hDescriptor);
+
+
+	mTextures1 = std::move(bricksTex1);
+	mTextures2 = std::move(bricksTex2);
+	mTextures3 = std::move(bricksTex3);
+	mTextures4 = std::move(bricksTex4);
+	mTextures5 = std::move(bricksTex5);
+	mTextures6 = std::move(bricksTex6);
 }
 
 void D3DClass::FlushCommandQueue()
