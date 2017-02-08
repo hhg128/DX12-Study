@@ -79,6 +79,7 @@ void CResourceManager::Load(std::string fbxFileName)
 		FbxTexture* pTexture = pScene->GetTexture(i);
 		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
 		std::string textureFileName = pFileTexture->GetFileName();
+		std::string textureInternalName = pFileTexture->GetName();
 
 		size_t pos = textureFileName.rfind("\\");
 		textureFileName = textureFileName.substr(pos+1);
@@ -130,6 +131,7 @@ void CResourceManager::Load(std::string fbxFileName)
 				meshClass->m_VertexArray.push_back(vertex);
 			}
 
+			// UV
 			for (int i = 0; i < nTriangleCount; ++i)
 			{
 				for (int j = 0; j < 3; ++j)
@@ -188,6 +190,33 @@ void CResourceManager::Load(std::string fbxFileName)
 					MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
 					vertex.UV.x = outUV.x;
 					vertex.UV.y = 1.f - outUV.y;
+				}
+			}
+
+			// texture id
+			for (int i = 0; i < pMesh->GetElementMaterialCount(); ++i)
+			{
+				FbxGeometryElementMaterial* pMaterialElement = pMesh->GetElementMaterial(i);
+				if (pMaterialElement->GetMappingMode() == FbxGeometryElement::eAllSame)
+				{
+					FbxSurfaceMaterial* pMaterial = pMesh->GetNode()->GetMaterial(pMaterialElement->GetIndexArray().GetAt(0));
+					int nMatId = pMaterialElement->GetIndexArray().GetAt(0);
+					if (nMatId >= 0)
+					{
+						FbxProperty Property;
+						Property = pMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
+
+						int nTextureCount = Property.GetSrcObjectCount<FbxTexture>();
+						for (int textureIndex = 0; textureIndex < nTextureCount; ++textureIndex)
+						{
+							FbxTexture* pTexture = Property.GetSrcObject<FbxTexture>(textureIndex);
+							if (pTexture)
+							{
+								std::string textureInternalName = pTexture->GetName();
+							}
+						}
+
+					}
 				}
 			}
 
