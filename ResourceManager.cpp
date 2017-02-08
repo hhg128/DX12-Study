@@ -98,12 +98,15 @@ void CResourceManager::Load(std::string fbxFileName)
 			int nControlPointCount = pMesh->GetControlPointsCount();
 			int nTriangleCount = pMesh->GetPolygonCount();
 
-			MeshClass* modelclass = new MeshClass;
+			MeshClass* meshClass = new MeshClass;
 
 			// 각 메시 별로 RST가 있음
-			pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-			pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-			pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+			FbxVector4 pos = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+			FbxVector4 rot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+			FbxVector4 scale = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+
+			XMFLOAT3 meshPos = XMFLOAT3(pos.mData[0], pos.mData[2], pos.mData[1]);
+			meshClass->m_vPos = meshPos;
 
 			// Vertex List
 			for (int i = 0; i < nControlPointCount; ++i)
@@ -167,7 +170,7 @@ void CResourceManager::Load(std::string fbxFileName)
 				vertex.Pos = currPosition;
 				vertex.UV.x = 1.f - outUV.x;
 				vertex.UV.y = 1.f - outUV.y;
-				modelclass->m_VertexArray.push_back(vertex);
+				meshClass->m_VertexArray.push_back(vertex);
 			}
 
 			// Index List
@@ -182,10 +185,10 @@ void CResourceManager::Load(std::string fbxFileName)
 				index.a = indexA;
 				index.b = indexB;
 				index.c = indexC;
-				modelclass->m_IndexArray.push_back(index);
+				meshClass->m_IndexArray.push_back(index);
 			}
 
-			m_ModelMap[fbxFileName]->m_MeshArray.push_back(modelclass);
+			m_ModelMap[fbxFileName]->m_MeshArray.push_back(meshClass);
 		}
 	}
 }

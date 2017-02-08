@@ -36,8 +36,8 @@ VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.pos = float4(input.pos, 1.0f);
-	output.pos = mul(output.pos, world);
-	//output.pos = mul(output.pos, world2);
+	//output.pos = mul(output.pos, world);
+	output.pos = mul(output.pos, world2);
 	output.pos = mul(output.pos, view);
 	output.pos = mul(output.pos, proj);
 	

@@ -144,7 +144,7 @@ bool D3DClass::Render()
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
 	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	m_commandList->SetGraphicsRootDescriptorTable(1, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 	auto perObjectCB = PerObjectCB->Resource();
 	m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress());
@@ -157,6 +157,11 @@ bool D3DClass::Render()
 		{
 			int vertexCount = mesh->m_VertexArray.size();
 			int triangleCount =mesh->m_IndexArray.size();
+
+			PerObjectBuffer perObjectBuffer = {};
+			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z)));
+
+			PerObjectCB->CopyData(0, perObjectBuffer);
 
 			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, 0, baseVertexLocation, 0);
 			baseVertexLocation += vertexCount;
@@ -213,9 +218,10 @@ bool D3DClass::BuildRootSignatures()
 	CD3DX12_DESCRIPTOR_RANGE texTable;
 	texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
 
-	CD3DX12_ROOT_PARAMETER constant[2];
+	CD3DX12_ROOT_PARAMETER constant[3];
 	constant[0].InitAsConstantBufferView(0, 0);
-	constant[1].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+	constant[1].InitAsConstantBufferView(1, 0);
+	constant[2].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	const CD3DX12_STATIC_SAMPLER_DESC sampler(
 		0, // shaderRegister
@@ -780,14 +786,6 @@ void D3DClass::OnCamera(float fDelta)
 	XMStoreFloat4x4(&constantBuffer.proj, XMMatrixTranspose(projMat));
 
 	PassCB->CopyData(0, constantBuffer);
-	
-
-	//////////////////////////////////////////////////////////////////////////
-
-	PerObjectBuffer perObjectBuffer = {};
-	XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixTranslation(10.f, 10.f, 120.f)));
-
-	PerObjectCB->CopyData(0, perObjectBuffer);
 }
 
 void D3DClass::LoadTexture(std::string texFilename)
