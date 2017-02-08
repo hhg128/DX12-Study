@@ -60,6 +60,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	
 	//gSystem->m_pResourceManager->Load("plane.fbx");
 	//gSystem->m_pResourceManager->Load("plane_bricks_dds.fbx");
+	//gSystem->m_pResourceManager->Load("plane_two_texture.fbx");
 	//gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 	//gSystem->m_pResourceManager->Load("humanoid.fbx");
 	gSystem->m_pResourceManager->Load("BG.fbx");
@@ -146,25 +147,47 @@ bool D3DClass::Render()
 	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-	auto perObjectCB = PerObjectCB->Resource();
-	m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress());
-
+	int b = 1;
 	int baseVertexLocation = 0;
+	int baseIndexLocation = 0;
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
 	{
+		int a = 0;
 		auto& meshArray = iter.second->m_MeshArray;
-		for(auto& mesh : meshArray)
+		//for(auto& mesh : meshArray)
+		for(int i = 0 ; i < meshArray.size(); ++i)
 		{
+			auto& mesh = meshArray[i];
 			int vertexCount = mesh->m_VertexArray.size();
 			int triangleCount =mesh->m_IndexArray.size();
 
+			
+
+			//if (a != b)
+			//{
+			//	baseVertexLocation += vertexCount;
+			//	baseIndexLocation += triangleCount * 3;
+			//	a++;
+			//	continue;;
+			//}
+			//a++;
+			
+			
+			
 			PerObjectBuffer perObjectBuffer = {};
-			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z)));
+			XMMATRIX pos = XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z);
+			XMMATRIX scale = XMMatrixScaling(mesh->m_vScale.x, mesh->m_vScale.y, mesh->m_vScale.z);
+			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(pos));
+			PerObjectCB->CopyData(i, perObjectBuffer);
 
-			PerObjectCB->CopyData(0, perObjectBuffer);
+			UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PerObjectBuffer));
 
-			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, 0, baseVertexLocation, 0);
+			auto perObjectCB = PerObjectCB->Resource();
+			m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress() + i * objCBByteSize);
+			
+			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, baseIndexLocation, baseVertexLocation, 0);
 			baseVertexLocation += vertexCount;
+			baseIndexLocation += triangleCount * 3;
 		}	
 	}
 
@@ -451,7 +474,7 @@ bool D3DClass::CreateConstantBufferViewDescriptorHeap()
 bool D3DClass::CreateConstantBufferView()
 {
 	PassCB = std::make_unique<UploadBuffer<ConstantBuffer>>(m_device.Get(), 1, true);
-	PerObjectCB = std::make_unique<UploadBuffer<PerObjectBuffer>>(m_device.Get(), 1, true);
+	PerObjectCB = std::make_unique<UploadBuffer<PerObjectBuffer>>(m_device.Get(), 2, true);
 
 	return true;
 }
@@ -792,7 +815,7 @@ void D3DClass::LoadTexture(std::string texFilename)
 {
 	auto bricksTex = std::make_unique<Texture>();
 	bricksTex->Name = "bricksTex";
-	bricksTex->Filename = TEXT("bricks.dds");
+	bricksTex->Filename = TEXT("13932ef0.dds");
 
 	mTextures = std::move(bricksTex);
 	

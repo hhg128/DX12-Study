@@ -95,18 +95,28 @@ void CResourceManager::Load(std::string fbxFileName)
 		if (pNode->GetNodeAttribute() && pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
 			FbxMesh* pMesh = pNode->GetMesh();
-			int nControlPointCount = pMesh->GetControlPointsCount();
+			unsigned int nControlPointCount = pMesh->GetControlPointsCount();
 			int nTriangleCount = pMesh->GetPolygonCount();
 
 			MeshClass* meshClass = new MeshClass;
 
-			// 각 메시 별로 RST가 있음
-			FbxVector4 pos = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-			FbxVector4 rot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-			FbxVector4 scale = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+			//FbxVector4 pos1 = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+			//FbxVector4 rot1 = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+			//FbxVector4 scale1 = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
 
-			XMFLOAT3 meshPos = XMFLOAT3(pos.mData[0], pos.mData[2], pos.mData[1]);
+			FbxDouble3 pos = pNode->LclTranslation.Get();
+			FbxDouble3 rot = pNode->LclRotation.Get();
+			FbxDouble3 scale = pNode->LclScaling.Get();
+
+			XMFLOAT3 meshPos = XMFLOAT3(pos.mData[0], pos.mData[1], pos.mData[2]);
+			XMFLOAT3 meshRot = XMFLOAT3(rot.mData[0], rot.mData[1], rot.mData[2]);
+			XMFLOAT3 meshScale = XMFLOAT3(scale.mData[0], scale.mData[1], scale.mData[2]);
 			meshClass->m_vPos = meshPos;
+			meshClass->m_vRot = meshRot;
+			meshClass->m_vScale = meshScale;
+
+			FbxAMatrix& lGlobalTransform = pNode->EvaluateGlobalTransform();
+			FbxAMatrix& lLocalTransform = pNode->EvaluateLocalTransform();
 
 			// Vertex List
 			for (int i = 0; i < nControlPointCount; ++i)

@@ -24,6 +24,8 @@ public:
 	std::vector<VertexType>		m_VertexArray;
 
 	XMFLOAT3 m_vPos;
+	XMFLOAT3 m_vRot;
+	XMFLOAT3 m_vScale;
 
 	int m_textureIndex = 0;
 };
