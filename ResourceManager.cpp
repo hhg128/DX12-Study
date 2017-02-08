@@ -134,8 +134,9 @@ void CResourceManager::Load(std::string fbxFileName)
 			{
 				for (int j = 0; j < 3; ++j)
 				{
+					int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
+					
 					XMFLOAT2 outUV;
-
 					FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
 					if (vertexUV)
 					{
@@ -146,14 +147,14 @@ void CResourceManager::Load(std::string fbxFileName)
 							{
 							case FbxGeometryElement::eDirect:
 							{
-								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[0]);
-								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(i).mData[1]);
+								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(ctrlPointIndex).mData[0]);
+								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(ctrlPointIndex).mData[1]);
 							}
 							break;
 
 							case FbxGeometryElement::eIndexToDirect:
 							{
-								int index = vertexUV->GetIndexArray().GetAt(i);
+								int index = vertexUV->GetIndexArray().GetAt(ctrlPointIndex);
 								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[0]);
 								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[1]);
 							}
@@ -183,7 +184,7 @@ void CResourceManager::Load(std::string fbxFileName)
 						}
 					}
 
-					int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
+					
 					MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
 					vertex.UV.x = outUV.x;
 					vertex.UV.y = 1.f - outUV.y;
