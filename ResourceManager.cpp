@@ -72,6 +72,10 @@ void CResourceManager::Load(std::string fbxFileName)
 		OurAxisSystem.ConvertScene(pScene);
 	}
 
+
+	ModelClass* modelClass = new ModelClass;
+	m_ModelMap[fbxFileName] = modelClass;
+
 	// texture 구하기
 	const int nTextureCount = pScene->GetTextureCount();
 	for (int i = 0; i < nTextureCount; ++i)
@@ -83,10 +87,9 @@ void CResourceManager::Load(std::string fbxFileName)
 
 		size_t pos = textureFileName.rfind("\\");
 		textureFileName = textureFileName.substr(pos+1);
+
+		modelClass->m_TextureMap[textureInternalName] = textureFileName;
 	}
-	
-	ModelClass* modelClass = new ModelClass;
-	m_ModelMap[fbxFileName] = modelClass;
 
 	// Mesh 구하기
 	const int nNodeCount = pScene->GetSrcObjectCount<FbxNode>();
@@ -203,6 +206,7 @@ void CResourceManager::Load(std::string fbxFileName)
 					int nMatId = pMaterialElement->GetIndexArray().GetAt(0);
 					if (nMatId >= 0)
 					{
+						// diffuse 텍스처만 사용한다. 일단...
 						FbxProperty Property;
 						Property = pMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
 
@@ -212,10 +216,15 @@ void CResourceManager::Load(std::string fbxFileName)
 							FbxTexture* pTexture = Property.GetSrcObject<FbxTexture>(textureIndex);
 							if (pTexture)
 							{
-								std::string textureInternalName = pTexture->GetName();
+								//std::string textureInternalName = pTexture->GetName();
+
+								FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
+								std::string textureFileName = pFileTexture->GetFileName();
+								std::string textureInternalName = pFileTexture->GetName();
+
+								meshClass->m_TexterIdNameArray.push_back(textureInternalName);
 							}
 						}
-
 					}
 				}
 			}

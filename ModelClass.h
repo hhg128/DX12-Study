@@ -28,6 +28,8 @@ public:
 	XMFLOAT3 m_vScale;
 
 	int m_textureIndex = 0;
+
+	std::vector<std::string> m_TexterIdNameArray;
 };
 
 class ModelClass
@@ -38,5 +40,7 @@ public:
 
 public:
 	std::vector<MeshClass*>		m_MeshArray;
+
+	std::unordered_map<std::string, std::string> m_TextureMap;
 };
 

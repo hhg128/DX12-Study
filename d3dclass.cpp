@@ -147,7 +147,7 @@ bool D3DClass::Render()
 	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 	m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-	int b = 1;
+	int b = 0;
 	int baseVertexLocation = 0;
 	int baseIndexLocation = 0;
 	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
@@ -819,7 +819,7 @@ void D3DClass::LoadTexture(std::string texFilename)
 {
 	auto bricksTex = std::make_unique<Texture>();
 	bricksTex->Name = "bricksTex";
-	bricksTex->Filename = TEXT("13932ef0.dds");
+	bricksTex->Filename = TEXT("12c14c70.dds");
 
 	mTextures = std::move(bricksTex);
 	
