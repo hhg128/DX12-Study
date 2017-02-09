@@ -183,7 +183,7 @@ bool D3DClass::Render()
 			XMMATRIX worldmat = XMLoadFloat4x4(&mesh->m_mat);
 			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(worldmat));
 			//XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixMultiply(pos, scale)));
-			perObjectBuffer.texIndex = i;
+			perObjectBuffer.texIndex = (i==6) ? 5 : i;
 			PerObjectCB->CopyData(i, perObjectBuffer);
 
 

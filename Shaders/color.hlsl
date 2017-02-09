@@ -49,7 +49,7 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-	float4 albedo = gDiffuseMap[0].Sample(gsamLinearWrap, input.mTexCoord);
+	float4 albedo = gDiffuseMap[index].Sample(gsamLinearWrap, input.mTexCoord);
 	return albedo;
 
 	//return float4(0.f, 0.f, 0.f, 0.f);
