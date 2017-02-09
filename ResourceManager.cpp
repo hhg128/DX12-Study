@@ -65,12 +65,12 @@ void CResourceManager::Load(std::string fbxFileName)
 	pImporter->Import(pScene);
 
 	// Convert Axis System to what is used in this example, if needed
-	FbxAxisSystem SceneAxisSystem = pScene->GetGlobalSettings().GetAxisSystem();
-	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
-	if (SceneAxisSystem != OurAxisSystem)
-	{
-		OurAxisSystem.ConvertScene(pScene);
-	}
+	//FbxAxisSystem SceneAxisSystem = pScene->GetGlobalSettings().GetAxisSystem();
+	//FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
+	//if (SceneAxisSystem != OurAxisSystem)
+	//{
+	//	OurAxisSystem.ConvertScene(pScene);
+	//}
 
 
 	ModelClass* modelClass = new ModelClass;
@@ -110,7 +110,10 @@ void CResourceManager::Load(std::string fbxFileName)
 			FbxDouble3 rot = pNode->LclRotation.Get();
 			FbxDouble3 scale = pNode->LclScaling.Get();
 
-			XMFLOAT3 meshPos = XMFLOAT3(pos.mData[0], pos.mData[1], pos.mData[2]);
+			XMFLOAT3 meshPos;// = XMFLOAT3(-pos.mData[0], pos.mData[1], pos.mData[2]);
+			meshPos.x = static_cast<float>(pos.mData[0]);
+			meshPos.y = static_cast<float>(pos.mData[1]);
+			meshPos.z = static_cast<float>(pos.mData[2]);
 			XMFLOAT3 meshRot = XMFLOAT3(rot.mData[0], rot.mData[1], rot.mData[2]);
 			XMFLOAT3 meshScale = XMFLOAT3(scale.mData[0], scale.mData[1], scale.mData[2]);
 			meshClass->m_vPos = meshPos;
@@ -119,6 +122,29 @@ void CResourceManager::Load(std::string fbxFileName)
 
 			FbxAMatrix& lGlobalTransform = pNode->EvaluateGlobalTransform();
 			FbxAMatrix& lLocalTransform = pNode->EvaluateLocalTransform();
+
+			XMFLOAT4X4 mat;
+			mat._11 = lGlobalTransform.mData[0].mData[0];
+			mat._12 = lGlobalTransform.mData[0].mData[1];
+			mat._13 = lGlobalTransform.mData[0].mData[2];
+			mat._14 = lGlobalTransform.mData[0].mData[3];
+			
+			mat._21 = lGlobalTransform.mData[2].mData[0];
+			mat._22 = lGlobalTransform.mData[2].mData[1];
+			mat._23 = lGlobalTransform.mData[2].mData[2];
+			mat._24 = lGlobalTransform.mData[2].mData[3];
+			
+			mat._31 = lGlobalTransform.mData[1].mData[0];
+			mat._32 = lGlobalTransform.mData[1].mData[1];
+			mat._33 = lGlobalTransform.mData[1].mData[2];
+			mat._34 = lGlobalTransform.mData[1].mData[3];
+			
+			mat._41 = lGlobalTransform.mData[3].mData[0];
+			mat._42 = lGlobalTransform.mData[3].mData[1];
+			mat._43 = lGlobalTransform.mData[3].mData[2];
+			mat._44 = lGlobalTransform.mData[3].mData[3];
+			
+			meshClass->m_mat = mat;
 
 			// Vertex List
 			for (int i = 0; i < nControlPointCount; ++i)

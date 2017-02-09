@@ -180,8 +180,9 @@ bool D3DClass::Render()
 			XMMATRIX pos = XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z);
 			XMMATRIX scale = XMMatrixScaling(mesh->m_vScale.x, mesh->m_vScale.y, mesh->m_vScale.z);
 
-
-			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixMultiply(pos, scale)));
+			XMMATRIX worldmat = XMLoadFloat4x4(&mesh->m_mat);
+			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(worldmat));
+			//XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixMultiply(pos, scale)));
 			perObjectBuffer.texIndex = i;
 			PerObjectCB->CopyData(i, perObjectBuffer);
 

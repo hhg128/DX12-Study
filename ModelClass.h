@@ -27,6 +27,8 @@ public:
 	XMFLOAT3 m_vRot;
 	XMFLOAT3 m_vScale;
 
+	XMFLOAT4X4 m_mat;
+
 	int m_textureIndex = 0;
 
 	std::vector<std::string> m_TexterIdNameArray;
