@@ -125,23 +125,23 @@ void CResourceManager::Load(std::string fbxFileName)
 
 			XMFLOAT4X4 mat;
 			mat._11 = lGlobalTransform.mData[0].mData[0];
-			mat._12 = lGlobalTransform.mData[0].mData[1];
-			mat._13 = lGlobalTransform.mData[0].mData[2];
+			mat._12 = lGlobalTransform.mData[0].mData[2];
+			mat._13 = lGlobalTransform.mData[0].mData[1];
 			mat._14 = lGlobalTransform.mData[0].mData[3];
 			
 			mat._21 = lGlobalTransform.mData[2].mData[0];
-			mat._22 = lGlobalTransform.mData[2].mData[1];
-			mat._23 = lGlobalTransform.mData[2].mData[2];
+			mat._22 = lGlobalTransform.mData[2].mData[2];
+			mat._23 = lGlobalTransform.mData[2].mData[1];
 			mat._24 = lGlobalTransform.mData[2].mData[3];
 			
 			mat._31 = lGlobalTransform.mData[1].mData[0];
-			mat._32 = lGlobalTransform.mData[1].mData[1];
-			mat._33 = lGlobalTransform.mData[1].mData[2];
+			mat._32 = lGlobalTransform.mData[1].mData[2];
+			mat._33 = lGlobalTransform.mData[1].mData[1];
 			mat._34 = lGlobalTransform.mData[1].mData[3];
 			
 			mat._41 = lGlobalTransform.mData[3].mData[0];
-			mat._42 = lGlobalTransform.mData[3].mData[1];
-			mat._43 = lGlobalTransform.mData[3].mData[2];
+			mat._42 = lGlobalTransform.mData[3].mData[2];
+			mat._43 = lGlobalTransform.mData[3].mData[1];
 			mat._44 = lGlobalTransform.mData[3].mData[3];
 			
 			meshClass->m_mat = mat;
