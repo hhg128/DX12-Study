@@ -827,6 +827,8 @@ void D3DClass::OnCamera(float fDelta)
 
 void D3DClass::LoadTexture(std::string texFilename)
 {
+	std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
+
 	auto bricksTex1 = std::make_unique<Texture>();
 	bricksTex1->Name = "bricksTex1";
 	bricksTex1->Filename = TEXT("12c14c70.dds");
@@ -917,6 +919,17 @@ void D3DClass::LoadTexture(std::string texFilename)
 	mTextures4 = std::move(bricksTex4);
 	mTextures5 = std::move(bricksTex5);
 	mTextures6 = std::move(bricksTex6);
+
+	std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+	
+	char buff[1023];
+	sprintf(buff, "[texture loading] %lld ms\n", std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+	
+	std::string result(buff);
+	std::wstring outputString;
+
+	outputString.assign(result.begin(), result.end());
+	OutputDebugString(outputString.c_str());
 }
 
 void D3DClass::FlushCommandQueue()

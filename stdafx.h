@@ -31,6 +31,7 @@
 #include "d3dx12.h"
 #include "d3dUtil.h"
 #include <Shlwapi.h>
+#include <chrono>
 
 //////////////
 // INCLUDES //
