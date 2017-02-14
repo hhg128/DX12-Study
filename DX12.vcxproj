@@ -136,6 +136,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
     <ClCompile Include="CameraClass.cpp" />
     <ClCompile Include="d3dclass.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
@@ -152,6 +153,7 @@
     <ClCompile Include="TextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="CameraClass.h" />
     <ClInclude Include="d3dclass.h" />
     <ClInclude Include="d3dUtil.h" />
