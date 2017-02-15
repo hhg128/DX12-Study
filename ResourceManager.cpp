@@ -84,11 +84,16 @@ void CResourceManager::Load(std::string fbxFileName)
 		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
 		std::string textureFileName = pFileTexture->GetFileName();
 		std::string textureInternalName = pFileTexture->GetName();
+		int64_t uId = pFileTexture->GetUniqueID();
 
 		size_t pos = textureFileName.rfind("\\");
 		textureFileName = textureFileName.substr(pos+1);
+		
+		auto Tex = std::make_unique<Texture>();
+		StringHelper::ConvertStringToWString(textureFileName, Tex->Filename);
+		Tex->Name = textureInternalName;
 
-		modelClass->m_TextureMap[textureInternalName] = textureFileName;
+		modelClass->m_TextureMap[uId] = std::move(Tex);
 	}
 
 	// Mesh ±¸ÇÏ±â
@@ -247,8 +252,9 @@ void CResourceManager::Load(std::string fbxFileName)
 								FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
 								std::string textureFileName = pFileTexture->GetFileName();
 								std::string textureInternalName = pFileTexture->GetName();
+								int64_t uId = pFileTexture->GetUniqueID();
 
-								meshClass->m_TexterIdNameArray.push_back(textureInternalName);
+								meshClass->m_TexterIdArray.push_back(uId);
 							}
 						}
 					}
@@ -273,6 +279,8 @@ void CResourceManager::Load(std::string fbxFileName)
 			m_ModelMap[fbxFileName]->m_MeshArray.push_back(meshClass);
 		}
 	}
+
+	modelClass->LoadTextures();
 }
 
 void CResourceManager::LoadTexture(std::string fbxFileName)

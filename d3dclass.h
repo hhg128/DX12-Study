@@ -11,28 +11,10 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-#ifndef ReturnFalseIfFailed
-#define ReturnFalseIfFailed(x)				\
-{                                           \
-    HRESULT hr__ = (x);                     \
-    if(FAILED(hr__)) { return false; }		\
-}
-
-#define AssertIfFailed(x)				\
-{                                           \
-    HRESULT hr__ = (x);                     \
-    if(FAILED(hr__)) { assert(false); }		\
-}
-#endif
-
 struct Vertex
 {
-	Vertex() {}
-	//Vertex(float x, float y, float z, float r, float g, float b, float a) : Pos(x, y, z), color(r, g, b, z) {}
-
 	XMFLOAT3 Pos;
 	XMFLOAT2 UV;
-	//XMFLOAT4 color;
 };
 
 struct PerObjectBuffer
@@ -46,10 +28,6 @@ struct ConstantBuffer
 	XMFLOAT4X4 world;
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 proj;
-
-	// Constant buffers are 256-byte aligned in GPU memory. Padding is added
-	// for convenience when computing the struct's size.
-	//float dummy[32];
 };
 
 ////////////////////////////////////////////////////////////////////////////////

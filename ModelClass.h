@@ -31,7 +31,7 @@ public:
 
 	int m_textureIndex = 0;
 
-	std::vector<std::string> m_TexterIdNameArray;
+	std::vector<int64_t> m_TexterIdArray;
 };
 
 class ModelClass
@@ -40,9 +40,11 @@ public:
 	ModelClass();
 	~ModelClass();
 
+	void LoadTextures();
+
 public:
 	std::vector<MeshClass*>		m_MeshArray;
 
-	std::unordered_map<std::string, std::string> m_TextureMap;
+	std::unordered_map<int64_t, std::unique_ptr<Texture>> m_TextureMap;
 };
 

@@ -41,3 +41,19 @@
 
 #include <fbxsdk.h>
 #include <fbxsdk/scene/fbxaxissystem.h>
+#include "StringHelper.h"
+
+
+#ifndef ReturnFalseIfFailed
+#define ReturnFalseIfFailed(x)				\
+{                                           \
+    HRESULT hr__ = (x);                     \
+    if(FAILED(hr__)) { return false; }		\
+}
+
+#define AssertIfFailed(x)				\
+{                                           \
+    HRESULT hr__ = (x);                     \
+    if(FAILED(hr__)) { assert(false); }		\
+}
+#endif
