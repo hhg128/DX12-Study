@@ -157,7 +157,7 @@ bool D3DClass::Render()
 		int a = 0;
 		auto& meshArray = iter.second->m_MeshArray;
 		//for(auto& mesh : meshArray)
-		for(int i = 0 ; i < meshArray.size(); ++i)
+		for(size_t i = 0 ; i < meshArray.size(); ++i)
 		{
 			auto& mesh = meshArray[i];
 			int vertexCount = mesh->m_VertexArray.size();
@@ -923,7 +923,7 @@ void D3DClass::LoadTexture(std::string texFilename)
 	std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
 	
 	char buff[1023];
-	sprintf(buff, "[texture loading] %lld ms\n", std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+	sprintf_s(buff, "[texture loading] %lld ms\n", std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 	
 	std::string result(buff);
 	std::wstring outputString;

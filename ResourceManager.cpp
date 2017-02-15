@@ -152,7 +152,7 @@ void CResourceManager::Load(std::string fbxFileName)
 			meshClass->m_mat = mat;
 
 			// Vertex List
-			for (int i = 0; i < nControlPointCount; ++i)
+			for (size_t i = 0; i < nControlPointCount; ++i)
 			{
 				// Max 는 Y가 D3D 의 Z임
 				XMFLOAT3 currPosition;
