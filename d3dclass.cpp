@@ -147,12 +147,6 @@ bool D3DClass::Render()
 	auto passCB = PassCB->Resource();
 	m_commandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
-
-	//ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
-	//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	//m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-
 	int baseVertexLocation = 0;
 	int baseIndexLocation = 0;
 	for (auto& Model : gSystem->m_pResourceManager->m_ModelMap)
@@ -160,10 +154,6 @@ bool D3DClass::Render()
 		ID3D12DescriptorHeap* descriptorHeaps[] = { Model.second->mSrvDescriptorHeap.Get() };
 		m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 		m_commandList->SetGraphicsRootDescriptorTable(2, Model.second->mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-
-		//ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
-		//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-		//m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		
 		auto& meshArray = Model.second->m_MeshArray;
 		for(size_t i = 0 ; i < meshArray.size(); ++i)
@@ -181,7 +171,6 @@ bool D3DClass::Render()
 			perObjectBuffer.texIndex = (i==6) ? 5 : i;
 			//perObjectBuffer.texIndex = mesh->m_textureIndex;
 			PerObjectCB->CopyData(i, perObjectBuffer);
-
 
 			UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PerObjectBuffer));
 

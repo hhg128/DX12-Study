@@ -247,8 +247,6 @@ void CResourceManager::Load(std::string fbxFileName)
 							FbxTexture* pTexture = Property.GetSrcObject<FbxTexture>(textureIndex);
 							if (pTexture)
 							{
-								//std::string textureInternalName = pTexture->GetName();
-
 								FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
 								std::string textureFileName = pFileTexture->GetFileName();
 								std::string textureInternalName = pFileTexture->GetName();
