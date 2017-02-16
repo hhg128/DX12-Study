@@ -25,14 +25,6 @@ ModelClass::~ModelClass()
 
 void ModelClass::LoadTextures()
 {
-	for (auto& texture : m_TextureMap)
-	{
-		std::string textureFileName;
-		StringHelper::ConvertWStringToString(texture.second->Filename, textureFileName);
-
-		AssertIfFailed(DirectX::CreateDDSTextureFromFile12(gD3dClass->m_device.Get(), gD3dClass->m_commandList.Get(), texture.second->Filename.c_str(), texture.second->Resource, texture.second->UploadHeap));
-	}
-
 	UINT mCbvSrvDescriptorSize = gD3dClass->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
@@ -45,6 +37,11 @@ void ModelClass::LoadTextures()
 
 	for (auto& texture : m_TextureMap)
 	{
+		std::string textureFileName;
+		StringHelper::ConvertWStringToString(texture.second->Filename, textureFileName);
+
+		AssertIfFailed(DirectX::CreateDDSTextureFromFile12(gD3dClass->m_device.Get(), gD3dClass->m_commandList.Get(), texture.second->Filename.c_str(), texture.second->Resource, texture.second->UploadHeap));
+
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		srvDesc.Format = texture.second->Resource->GetDesc().Format;
