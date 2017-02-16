@@ -255,6 +255,7 @@ void CResourceManager::Load(std::string fbxFileName)
 								int64_t uId = pFileTexture->GetUniqueID();
 
 								meshClass->m_TexterIdArray.push_back(uId);
+								meshClass->m_textureIndex = uId;
 							}
 						}
 					}

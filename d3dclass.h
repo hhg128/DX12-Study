@@ -86,21 +86,23 @@ private:
 		const std::string& entrypoint,
 		const std::string& target);
 
+public:
+	ComPtr<ID3D12Device>			m_device;
+
+	ComPtr<ID3D12GraphicsCommandList>	m_commandList;
+
 private:
 
 	static const int m_nBackBufferCount = 2;
 
-	ComPtr<ID3D12Device>			m_device;
-	ComPtr<ID3D12CommandQueue>		m_commandQueue;
 	ComPtr<IDXGISwapChain3>			m_swapChain;
-
 	ComPtr<ID3D12DescriptorHeap>	m_renderTargetViewHeap;
 	ComPtr<ID3D12Resource>			m_backBufferRenderTarget[m_nBackBufferCount];
 	
 	unsigned int m_CurrentBufferIndex;
 
 	ComPtr<ID3D12CommandAllocator>		m_commandAllocator[2];
-	ComPtr<ID3D12GraphicsCommandList>	m_commandList;
+	ComPtr<ID3D12CommandQueue>			m_commandQueue;
 	ComPtr<ID3D12PipelineState>			m_pipelineState;
 	ComPtr<ID3D12Fence>					m_fence;
 	HANDLE								m_fenceEvent = 0;
@@ -163,5 +165,7 @@ private:
 
 	UINT mCbvSrvDescriptorSize = 0;
 };
+
+extern D3DClass* gD3dClass;
 
 #endif

@@ -8,12 +8,16 @@
 #include "ResourceManager.h"
 #include "ModelClass.h"
 
+D3DClass* gD3dClass = nullptr;
+
 D3DClass::D3DClass()
 {
 }
 
 bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 {	
+	gD3dClass = this;
+
 	m_nWindowWidth = screenWidth;
 	m_nWindowHeight = screenHeight;
 
@@ -144,37 +148,29 @@ bool D3DClass::Render()
 	m_commandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
 
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
-	m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	//ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+	//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+	//m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 
-	int b = 0;
 	int baseVertexLocation = 0;
 	int baseIndexLocation = 0;
-	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
+	for (auto& Model : gSystem->m_pResourceManager->m_ModelMap)
 	{
-		int a = 0;
-		auto& meshArray = iter.second->m_MeshArray;
-		//for(auto& mesh : meshArray)
+		ID3D12DescriptorHeap* descriptorHeaps[] = { Model.second->mSrvDescriptorHeap.Get() };
+		m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+		m_commandList->SetGraphicsRootDescriptorTable(2, Model.second->mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+
+		//ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+		//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+		//m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		
+		auto& meshArray = Model.second->m_MeshArray;
 		for(size_t i = 0 ; i < meshArray.size(); ++i)
 		{
 			auto& mesh = meshArray[i];
 			int vertexCount = mesh->m_VertexArray.size();
 			int triangleCount =mesh->m_IndexArray.size();
-
-			
-
-			//if (a != b)
-			//{
-			//	baseVertexLocation += vertexCount;
-			//	baseIndexLocation += triangleCount * 3;
-			//	a++;
-			//	continue;;
-			//}
-			//a++;
-			
-			
 			
 			PerObjectBuffer perObjectBuffer = {};
 			XMMATRIX pos = XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z);
@@ -182,8 +178,8 @@ bool D3DClass::Render()
 
 			XMMATRIX worldmat = XMLoadFloat4x4(&mesh->m_mat);
 			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(worldmat));
-			//XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(XMMatrixMultiply(pos, scale)));
 			perObjectBuffer.texIndex = (i==6) ? 5 : i;
+			//perObjectBuffer.texIndex = mesh->m_textureIndex;
 			PerObjectCB->CopyData(i, perObjectBuffer);
 
 
@@ -191,17 +187,10 @@ bool D3DClass::Render()
 
 			auto perObjectCB = PerObjectCB->Resource();
 			m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress() + i * objCBByteSize);
-			
-
-			//ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
-			//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-			//m_commandList->SetGraphicsRootDescriptorTable(2, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
 			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, baseIndexLocation, baseVertexLocation, 0);
 			baseVertexLocation += vertexCount;
 			baseIndexLocation += triangleCount * 3;
-
-			
 		}	
 	}
 
@@ -296,7 +285,13 @@ bool D3DClass::BuildGeometry()
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 
-	LoadTexture("texture");
+	//LoadTexture("texture");
+
+	for (auto& Model : gSystem->m_pResourceManager->m_ModelMap)
+	{
+		Model.second->LoadTextures();
+	}
+
 
 	m_commandList->Close();
 	ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
@@ -911,7 +906,6 @@ void D3DClass::LoadTexture(std::string texFilename)
 	srvDesc.Format = bricksTex6->Resource->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = bricksTex6->Resource->GetDesc().MipLevels;
 	m_device->CreateShaderResourceView(bricksTex6->Resource.Get(), &srvDesc, hDescriptor);
-
 
 	mTextures1 = std::move(bricksTex1);
 	mTextures2 = std::move(bricksTex2);
