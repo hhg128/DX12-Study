@@ -163,9 +163,7 @@ bool D3DClass::Render()
 			int triangleCount =mesh->m_IndexArray.size();
 			
 			PerObjectBuffer perObjectBuffer = {};
-			XMMATRIX pos = XMMatrixTranslation(mesh->m_vPos.x, mesh->m_vPos.y, mesh->m_vPos.z);
-			XMMATRIX scale = XMMatrixScaling(mesh->m_vScale.x, mesh->m_vScale.y, mesh->m_vScale.z);
-
+			
 			XMMATRIX worldmat = XMLoadFloat4x4(&mesh->m_mat);
 			XMStoreFloat4x4(&perObjectBuffer.world, XMMatrixTranspose(worldmat));
 			perObjectBuffer.texIndex = (i==6) ? 5 : i;

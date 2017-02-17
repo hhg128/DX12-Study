@@ -77,24 +77,7 @@ void CResourceManager::Load(std::string fbxFileName)
 	m_ModelMap[fbxFileName] = modelClass;
 
 	// texture 구하기
-	const int nTextureCount = pScene->GetTextureCount();
-	for (int i = 0; i < nTextureCount; ++i)
-	{
-		FbxTexture* pTexture = pScene->GetTexture(i);
-		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
-		std::string textureFileName = pFileTexture->GetFileName();
-		std::string textureInternalName = pFileTexture->GetName();
-		int64_t uId = pFileTexture->GetUniqueID();
-
-		size_t pos = textureFileName.rfind("\\");
-		textureFileName = textureFileName.substr(pos+1);
-		
-		auto Tex = std::make_unique<Texture>();
-		StringHelper::ConvertStringToWString(textureFileName, Tex->Filename);
-		Tex->Name = textureInternalName;
-
-		modelClass->m_TextureMap[uId] = std::move(Tex);
-	}
+	ReadTextureInfo(pScene, modelClass);
 
 	// Mesh 구하기
 	const int nNodeCount = pScene->GetSrcObjectCount<FbxNode>();
@@ -109,85 +92,12 @@ void CResourceManager::Load(std::string fbxFileName)
 
 			MeshClass* meshClass = new MeshClass;
 
-			FbxNode* p = pNode->GetParent();
-
-			FbxDouble3 pos = pNode->LclTranslation.Get();
-			FbxDouble3 rot = pNode->LclRotation.Get();
-			FbxDouble3 scale = pNode->LclScaling.Get();
-
-			XMFLOAT3 meshPos;// = XMFLOAT3(-pos.mData[0], pos.mData[1], pos.mData[2]);
-			meshPos.x = static_cast<float>(pos.mData[0]);
-			meshPos.y = static_cast<float>(pos.mData[1]);
-			meshPos.z = static_cast<float>(pos.mData[2]);
-			XMFLOAT3 meshRot = XMFLOAT3(rot.mData[0], rot.mData[1], rot.mData[2]);
-			XMFLOAT3 meshScale = XMFLOAT3(scale.mData[0], scale.mData[1], scale.mData[2]);
-			meshClass->m_vPos = meshPos;
-			meshClass->m_vRot = meshRot;
-			meshClass->m_vScale = meshScale;
-
-			FbxAMatrix& lGlobalTransform = pNode->EvaluateGlobalTransform();
-			FbxAMatrix& lLocalTransform = pNode->EvaluateLocalTransform();
-
-			XMFLOAT4X4 mat;
-			mat._11 = static_cast<float>(lGlobalTransform.mData[0].mData[0]);
-			mat._12 = static_cast<float>(lGlobalTransform.mData[0].mData[2]);
-			mat._13 = static_cast<float>(lGlobalTransform.mData[0].mData[1]);
-			mat._14 = static_cast<float>(lGlobalTransform.mData[0].mData[3]);
-			
-			mat._21 = static_cast<float>(lGlobalTransform.mData[2].mData[0]);
-			mat._22 = static_cast<float>(lGlobalTransform.mData[2].mData[2]);
-			mat._23 = static_cast<float>(lGlobalTransform.mData[2].mData[1]);
-			mat._24 = static_cast<float>(lGlobalTransform.mData[2].mData[3]);
-			
-			mat._31 = static_cast<float>(lGlobalTransform.mData[1].mData[0]);
-			mat._32 = static_cast<float>(lGlobalTransform.mData[1].mData[2]);
-			mat._33 = static_cast<float>(lGlobalTransform.mData[1].mData[1]);
-			mat._34 = static_cast<float>(lGlobalTransform.mData[1].mData[3]);
-			
-			mat._41 = static_cast<float>(lGlobalTransform.mData[3].mData[0]);
-			mat._42 = static_cast<float>(lGlobalTransform.mData[3].mData[2]);
-			mat._43 = static_cast<float>(lGlobalTransform.mData[3].mData[1]);
-			mat._44 = static_cast<float>(lGlobalTransform.mData[3].mData[3]);
-			
-			meshClass->m_mat = mat;
-
+			ReadMatrix(pNode, meshClass);
 			ReadVertex(pMesh, nControlPointCount, meshClass);
 			ReadIndex(pMesh, nTriangleCount, meshClass);
 			ReadUV(pMesh, nTriangleCount, meshClass);
-			
 
-			// texture id
-			for (int i = 0; i < pMesh->GetElementMaterialCount(); ++i)
-			{
-				FbxGeometryElementMaterial* pMaterialElement = pMesh->GetElementMaterial(i);
-				if (pMaterialElement->GetMappingMode() == FbxGeometryElement::eAllSame)
-				{
-					FbxSurfaceMaterial* pMaterial = pMesh->GetNode()->GetMaterial(pMaterialElement->GetIndexArray().GetAt(0));
-					int nMatId = pMaterialElement->GetIndexArray().GetAt(0);
-					if (nMatId >= 0)
-					{
-						// diffuse 텍스처만 사용한다. 일단...
-						FbxProperty Property;
-						Property = pMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
-
-						int nTextureCount = Property.GetSrcObjectCount<FbxTexture>();
-						for (int textureIndex = 0; textureIndex < nTextureCount; ++textureIndex)
-						{
-							FbxTexture* pTexture = Property.GetSrcObject<FbxTexture>(textureIndex);
-							if (pTexture)
-							{
-								FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
-								std::string textureFileName = pFileTexture->GetFileName();
-								std::string textureInternalName = pFileTexture->GetName();
-								int64_t uId = pFileTexture->GetUniqueID();
-
-								meshClass->m_TexterIdArray.push_back(uId);
-								meshClass->m_textureIndex = uId;
-							}
-						}
-					}
-				}
-			}
+			ReadTextureId(pMesh, meshClass);
 
 			m_ModelMap[fbxFileName]->m_MeshArray.push_back(meshClass);
 		}
@@ -196,16 +106,91 @@ void CResourceManager::Load(std::string fbxFileName)
 	modelClass->LoadTextures();
 }
 
-void CResourceManager::LoadTexture(std::string fbxFileName)
+void CResourceManager::ReadTextureId(FbxMesh* pMesh, MeshClass* meshClass)
 {
-	auto bricksTex = std::make_unique<Texture>();
-	bricksTex->Name = "bricksTex";
-	bricksTex->Filename = L"../../Textures/bricks.dds";
-	//DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(), mCommandList.Get(), bricksTex->Filename.c_str(), bricksTex->Resource, bricksTex->UploadHeap);
+	// texture id
+	for (int i = 0; i < pMesh->GetElementMaterialCount(); ++i)
+	{
+		FbxGeometryElementMaterial* pMaterialElement = pMesh->GetElementMaterial(i);
+		if (pMaterialElement->GetMappingMode() == FbxGeometryElement::eAllSame)
+		{
+			FbxSurfaceMaterial* pMaterial = pMesh->GetNode()->GetMaterial(pMaterialElement->GetIndexArray().GetAt(0));
+			int nMatId = pMaterialElement->GetIndexArray().GetAt(0);
+			if (nMatId >= 0)
+			{
+				// diffuse 텍스처만 사용한다. 일단...
+				FbxProperty Property;
+				Property = pMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
+
+				int nTextureCount = Property.GetSrcObjectCount<FbxTexture>();
+				for (int textureIndex = 0; textureIndex < nTextureCount; ++textureIndex)
+				{
+					FbxTexture* pTexture = Property.GetSrcObject<FbxTexture>(textureIndex);
+					if (pTexture)
+					{
+						FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
+						std::string textureFileName = pFileTexture->GetFileName();
+						std::string textureInternalName = pFileTexture->GetName();
+						int64_t uId = pFileTexture->GetUniqueID();
+
+						meshClass->m_TexterIdArray.push_back(uId);
+						meshClass->m_textureIndex = uId;
+					}
+				}
+			}
+		}
+	}
 }
 
-void CResourceManager::Export()
+void CResourceManager::ReadTextureInfo(FbxScene* pScene, ModelClass* modelClass)
 {
+	const int nTextureCount = pScene->GetTextureCount();
+	for (int i = 0; i < nTextureCount; ++i)
+	{
+		FbxTexture* pTexture = pScene->GetTexture(i);
+		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
+		std::string textureFileName = pFileTexture->GetFileName();
+		std::string textureInternalName = pFileTexture->GetName();
+		int64_t uId = pFileTexture->GetUniqueID();
+
+		size_t pos = textureFileName.rfind("\\");
+		textureFileName = textureFileName.substr(pos + 1);
+
+		auto Tex = std::make_unique<Texture>();
+		StringHelper::ConvertStringToWString(textureFileName, Tex->Filename);
+		Tex->Name = textureInternalName;
+
+		modelClass->m_TextureMap[uId] = std::move(Tex);
+	}
+}
+
+void CResourceManager::ReadMatrix(FbxNode* pNode, MeshClass* meshClass)
+{
+	FbxAMatrix& lGlobalTransform = pNode->EvaluateGlobalTransform();
+	FbxAMatrix& lLocalTransform = pNode->EvaluateLocalTransform();
+
+	XMFLOAT4X4 mat;
+	mat._11 = static_cast<float>(lGlobalTransform.mData[0].mData[0]);
+	mat._12 = static_cast<float>(lGlobalTransform.mData[0].mData[2]);
+	mat._13 = static_cast<float>(lGlobalTransform.mData[0].mData[1]);
+	mat._14 = static_cast<float>(lGlobalTransform.mData[0].mData[3]);
+
+	mat._21 = static_cast<float>(lGlobalTransform.mData[2].mData[0]);
+	mat._22 = static_cast<float>(lGlobalTransform.mData[2].mData[2]);
+	mat._23 = static_cast<float>(lGlobalTransform.mData[2].mData[1]);
+	mat._24 = static_cast<float>(lGlobalTransform.mData[2].mData[3]);
+
+	mat._31 = static_cast<float>(lGlobalTransform.mData[1].mData[0]);
+	mat._32 = static_cast<float>(lGlobalTransform.mData[1].mData[2]);
+	mat._33 = static_cast<float>(lGlobalTransform.mData[1].mData[1]);
+	mat._34 = static_cast<float>(lGlobalTransform.mData[1].mData[3]);
+
+	mat._41 = static_cast<float>(lGlobalTransform.mData[3].mData[0]);
+	mat._42 = static_cast<float>(lGlobalTransform.mData[3].mData[2]);
+	mat._43 = static_cast<float>(lGlobalTransform.mData[3].mData[1]);
+	mat._44 = static_cast<float>(lGlobalTransform.mData[3].mData[3]);
+
+	meshClass->m_mat = mat;
 }
 
 void CResourceManager::ReadVertex(FbxMesh* pMesh, size_t nControlPointCount, MeshClass* meshClass)

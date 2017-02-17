@@ -15,10 +15,11 @@ public:
 	void Finalize();
 
 	void Load(std::string fbxFileName);
-	void LoadTexture(std::string fbxFileName);
 
-	void Export();
+	void ReadTextureId(FbxMesh* pMesh, MeshClass* meshClass);
+	void ReadTextureInfo(FbxScene* pScene, ModelClass* modelClass);
 
+	void ReadMatrix(FbxNode* pNode, MeshClass* meshClass);
 	void ReadVertex(FbxMesh* pMesh, size_t nControlPointCount, MeshClass* meshClass);
 	void ReadIndex(FbxMesh* pMesh, size_t nTriangleCount, MeshClass* meshClass);
 	void ReadNormal();

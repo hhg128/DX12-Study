@@ -29,7 +29,7 @@ public:
 
 	XMFLOAT4X4 m_mat;
 
-	int m_textureIndex = 0;
+	INT64 m_textureIndex = 0;
 
 	std::vector<int64_t> m_TexterIdArray;
 };
