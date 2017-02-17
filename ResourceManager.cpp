@@ -129,103 +129,32 @@ void CResourceManager::Load(std::string fbxFileName)
 			FbxAMatrix& lLocalTransform = pNode->EvaluateLocalTransform();
 
 			XMFLOAT4X4 mat;
-			mat._11 = lGlobalTransform.mData[0].mData[0];
-			mat._12 = lGlobalTransform.mData[0].mData[2];
-			mat._13 = lGlobalTransform.mData[0].mData[1];
-			mat._14 = lGlobalTransform.mData[0].mData[3];
+			mat._11 = static_cast<float>(lGlobalTransform.mData[0].mData[0]);
+			mat._12 = static_cast<float>(lGlobalTransform.mData[0].mData[2]);
+			mat._13 = static_cast<float>(lGlobalTransform.mData[0].mData[1]);
+			mat._14 = static_cast<float>(lGlobalTransform.mData[0].mData[3]);
 			
-			mat._21 = lGlobalTransform.mData[2].mData[0];
-			mat._22 = lGlobalTransform.mData[2].mData[2];
-			mat._23 = lGlobalTransform.mData[2].mData[1];
-			mat._24 = lGlobalTransform.mData[2].mData[3];
+			mat._21 = static_cast<float>(lGlobalTransform.mData[2].mData[0]);
+			mat._22 = static_cast<float>(lGlobalTransform.mData[2].mData[2]);
+			mat._23 = static_cast<float>(lGlobalTransform.mData[2].mData[1]);
+			mat._24 = static_cast<float>(lGlobalTransform.mData[2].mData[3]);
 			
-			mat._31 = lGlobalTransform.mData[1].mData[0];
-			mat._32 = lGlobalTransform.mData[1].mData[2];
-			mat._33 = lGlobalTransform.mData[1].mData[1];
-			mat._34 = lGlobalTransform.mData[1].mData[3];
+			mat._31 = static_cast<float>(lGlobalTransform.mData[1].mData[0]);
+			mat._32 = static_cast<float>(lGlobalTransform.mData[1].mData[2]);
+			mat._33 = static_cast<float>(lGlobalTransform.mData[1].mData[1]);
+			mat._34 = static_cast<float>(lGlobalTransform.mData[1].mData[3]);
 			
-			mat._41 = lGlobalTransform.mData[3].mData[0];
-			mat._42 = lGlobalTransform.mData[3].mData[2];
-			mat._43 = lGlobalTransform.mData[3].mData[1];
-			mat._44 = lGlobalTransform.mData[3].mData[3];
+			mat._41 = static_cast<float>(lGlobalTransform.mData[3].mData[0]);
+			mat._42 = static_cast<float>(lGlobalTransform.mData[3].mData[2]);
+			mat._43 = static_cast<float>(lGlobalTransform.mData[3].mData[1]);
+			mat._44 = static_cast<float>(lGlobalTransform.mData[3].mData[3]);
 			
 			meshClass->m_mat = mat;
 
-			// Vertex List
-			for (size_t i = 0; i < nControlPointCount; ++i)
-			{
-				// Max 는 Y가 D3D 의 Z임
-				XMFLOAT3 currPosition;
-				currPosition.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
-				currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
-				currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
-
-				MeshClass::VertexType vertex;
-				vertex.Pos = currPosition;
-				meshClass->m_VertexArray.push_back(vertex);
-			}
-
-			// UV
-			for (int i = 0; i < nTriangleCount; ++i)
-			{
-				for (int j = 0; j < 3; ++j)
-				{
-					int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
-					
-					XMFLOAT2 outUV;
-					FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
-					if (vertexUV)
-					{
-						switch (vertexUV->GetMappingMode())
-						{
-						case FbxGeometryElement::eByControlPoint:
-							switch (vertexUV->GetReferenceMode())
-							{
-							case FbxGeometryElement::eDirect:
-							{
-								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(ctrlPointIndex).mData[0]);
-								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(ctrlPointIndex).mData[1]);
-							}
-							break;
-
-							case FbxGeometryElement::eIndexToDirect:
-							{
-								int index = vertexUV->GetIndexArray().GetAt(ctrlPointIndex);
-								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[0]);
-								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[1]);
-							}
-							break;
-
-							default:
-								throw std::exception("Invalid Reference");
-							}
-							break;
-
-						case FbxGeometryElement::eByPolygonVertex:
-							switch (vertexUV->GetReferenceMode())
-							{
-							case FbxGeometryElement::eDirect:
-							case FbxGeometryElement::eIndexToDirect:
-							{
-								int tIndex = pMesh->GetTextureUVIndex(i, j);
-								outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(tIndex).mData[0]);
-								outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(tIndex).mData[1]);
-							}
-							break;
-
-							default:
-								throw std::exception("Invalid Reference");
-							}
-							break;
-						}
-					}
-
-					
-					MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
-					vertex.UV.x = outUV.x;
-					vertex.UV.y = 1.f - outUV.y;
-				}
-			}
+			ReadVertex(pMesh, nControlPointCount, meshClass);
+			ReadIndex(pMesh, nTriangleCount, meshClass);
+			ReadUV(pMesh, nTriangleCount, meshClass);
+			
 
 			// texture id
 			for (int i = 0; i < pMesh->GetElementMaterialCount(); ++i)
@@ -260,21 +189,6 @@ void CResourceManager::Load(std::string fbxFileName)
 				}
 			}
 
-			// Index List
-			for (int i = 0; i < nTriangleCount; ++i)
-			{
-				int indexA = pMesh->GetPolygonVertex(i, 0);
-				int indexB = pMesh->GetPolygonVertex(i, 2);
-				int indexC = pMesh->GetPolygonVertex(i, 1);
-
-				// Max 는 CCW로 인덱싱 되어 있음, D3D는 CW가 기본임, 그래서 순서를 바꿔줌
-				MeshClass::IndexType index;
-				index.a = indexA;
-				index.b = indexB;
-				index.c = indexC;
-				meshClass->m_IndexArray.push_back(index);
-			}
-
 			m_ModelMap[fbxFileName]->m_MeshArray.push_back(meshClass);
 		}
 	}
@@ -292,4 +206,114 @@ void CResourceManager::LoadTexture(std::string fbxFileName)
 
 void CResourceManager::Export()
 {
+}
+
+void CResourceManager::ReadVertex(FbxMesh* pMesh, size_t nControlPointCount, MeshClass* meshClass)
+{
+	// Vertex List
+	for (size_t i = 0; i < nControlPointCount; ++i)
+	{
+		// Max 는 Y가 D3D 의 Z임
+		XMFLOAT3 currPosition;
+		currPosition.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
+		currPosition.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+		currPosition.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
+
+		MeshClass::VertexType vertex;
+		vertex.Pos = currPosition;
+		meshClass->m_VertexArray.push_back(vertex);
+	}
+}
+
+void CResourceManager::ReadIndex(FbxMesh* pMesh, size_t nTriangleCount, MeshClass* meshClass)
+{
+	// Index List
+	for (size_t i = 0; i < nTriangleCount; ++i)
+	{
+		int indexA = pMesh->GetPolygonVertex(i, 0);
+		int indexB = pMesh->GetPolygonVertex(i, 2);
+		int indexC = pMesh->GetPolygonVertex(i, 1);
+
+		// Max 는 CCW로 인덱싱 되어 있음, D3D는 CW가 기본임, 그래서 순서를 바꿔줌
+		MeshClass::IndexType index;
+		index.a = indexA;
+		index.b = indexB;
+		index.c = indexC;
+		meshClass->m_IndexArray.push_back(index);
+	}
+}
+
+void CResourceManager::ReadNormal()
+{
+
+}
+
+void CResourceManager::ReadTexture()
+{
+
+}
+
+void CResourceManager::ReadUV(FbxMesh* pMesh, size_t nTriangleCount, MeshClass* meshClass)
+{
+	// UV
+	for (size_t i = 0; i < nTriangleCount; ++i)
+	{
+		for (size_t j = 0; j < 3; ++j)
+		{
+			int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
+
+			XMFLOAT2 outUV;
+			FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
+			if (vertexUV)
+			{
+				switch (vertexUV->GetMappingMode())
+				{
+				case FbxGeometryElement::eByControlPoint:
+					switch (vertexUV->GetReferenceMode())
+					{
+					case FbxGeometryElement::eDirect:
+					{
+						outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(ctrlPointIndex).mData[0]);
+						outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(ctrlPointIndex).mData[1]);
+					}
+					break;
+
+					case FbxGeometryElement::eIndexToDirect:
+					{
+						int index = vertexUV->GetIndexArray().GetAt(ctrlPointIndex);
+						outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[0]);
+						outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(index).mData[1]);
+					}
+					break;
+
+					default:
+						throw std::exception("Invalid Reference");
+					}
+					break;
+
+				case FbxGeometryElement::eByPolygonVertex:
+					switch (vertexUV->GetReferenceMode())
+					{
+					case FbxGeometryElement::eDirect:
+					case FbxGeometryElement::eIndexToDirect:
+					{
+						int tIndex = pMesh->GetTextureUVIndex(i, j);
+						outUV.x = static_cast<float>(vertexUV->GetDirectArray().GetAt(tIndex).mData[0]);
+						outUV.y = static_cast<float>(vertexUV->GetDirectArray().GetAt(tIndex).mData[1]);
+					}
+					break;
+
+					default:
+						throw std::exception("Invalid Reference");
+					}
+					break;
+				}
+			}
+
+
+			MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
+			vertex.UV.x = outUV.x;
+			vertex.UV.y = 1.f - outUV.y;
+		}
+	}
 }
