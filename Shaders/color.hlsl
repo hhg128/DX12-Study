@@ -18,14 +18,13 @@ struct VS_OUTPUT
 
 cbuffer cb0 : register(b0)
 {
-	float4x4 world;
 	float4x4 view;
 	float4x4 proj;
 };
 
 cbuffer cb1 : register(b1)
 {
-	float4x4 world2;
+	float4x4 world;
 	uint index;
 };
 
@@ -37,8 +36,7 @@ VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output;
 	output.pos = float4(input.pos, 1.0f);
-	//output.pos = mul(output.pos, world);
-	output.pos = mul(output.pos, world2);
+	output.pos = mul(output.pos, world);
 	output.pos = mul(output.pos, view);
 	output.pos = mul(output.pos, proj);
 	
@@ -51,6 +49,4 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 {
 	float4 albedo = gDiffuseMap[index].Sample(gsamLinearWrap, input.mTexCoord);
 	return albedo;
-
-	//return float4(0.f, 0.f, 0.f, 0.f);
 }

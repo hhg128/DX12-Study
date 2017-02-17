@@ -144,6 +144,7 @@
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="graphicsclass.cpp" />
     <ClCompile Include="inputclass.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="ModelClass.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="graphicsclass.h" />
     <ClInclude Include="inputclass.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="ModelClass.h" />
     <ClInclude Include="ResourceManager.h" />

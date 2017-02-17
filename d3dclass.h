@@ -25,7 +25,6 @@ struct PerObjectBuffer
 
 struct ConstantBuffer
 {
-	XMFLOAT4X4 world;
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 proj;
 };
@@ -73,8 +72,6 @@ public:
 	bool CreateFence();
 
 	void OnCamera(float fDelta);
-
-	void LoadTexture(std::string texFilename);
 
 	UINT64 mCurrentFence = 0;
 	void FlushCommandQueue();
