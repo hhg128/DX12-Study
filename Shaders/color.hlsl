@@ -15,14 +15,14 @@ struct VS_OUTPUT
 {
 	float4 pos: SV_POSITION;
 	float2 mTexCoord : TEXCOORD;
-	float3 diffuse : TEXCOORD1;
+	float3 normal : normal;
 };
 
 cbuffer cb0 : register(b0)
 {
 	float4x4 view;
 	float4x4 proj;
-	float3 lightPos;
+	float3 lightDirection;
 };
 
 cbuffer cb1 : register(b1)
@@ -38,21 +38,20 @@ SamplerState gsamLinearWrap : register(s0);
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output;
+
+	// WVP transform
 	output.pos = float4(input.pos, 1.0f);
 	output.pos = mul(output.pos, world);
-
-	// ºûÀÇ ¹æÇâ
-	float3 lightDir = output.pos - lightPos;
-	lightDir = normalize(lightDir);
-
-	float3 worldNormal = mul(input.normal, world);
-	worldNormal = normalize(worldNormal);
-
-	output.diffuse = dot(-lightDir, worldNormal);
-
 	output.pos = mul(output.pos, view);
 	output.pos = mul(output.pos, proj);
 	
+
+	// Vertex Normal
+	output.normal = mul(input.normal, world);
+	output.normal = normalize(output.normal);
+	
+	
+	// Texture UV
 	output.mTexCoord = input.mTexCoord;
 	
 	return output;
@@ -60,7 +59,26 @@ VS_OUTPUT VS(VS_INPUT input)
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-	float3 d = saturate(input.diffuse);
-	float4 albedo = gDiffuseMap[index].Sample(gsamLinearWrap, input.mTexCoord) * float4(d, 1);
-	return albedo;
+	float4 textureColor;
+	float4 color;
+	float4 diffuseColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	float4 ambientColor = float4(0.15f, 0.15f, 0.15f, 1.0f);
+	float3 lightDir;
+	float lightIntensity;
+
+	textureColor = gDiffuseMap[index].Sample(gsamLinearWrap, input.mTexCoord);
+
+	color = ambientColor;
+	lightDir = -lightDirection;
+
+	lightIntensity = saturate(dot(input.normal, lightDir));
+	if (lightIntensity > 0.0f)
+	{
+		color += (diffuseColor * lightIntensity);
+	}
+
+	color = saturate(color);
+	color = color * textureColor;
+
+	return color;
 }

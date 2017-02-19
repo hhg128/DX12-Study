@@ -6,9 +6,9 @@ public:
 	CLight();
 	~CLight();
 
-	void SetLightPosition(DirectX::XMFLOAT3 pos) { m_vPos = pos; };
-	DirectX::XMFLOAT3 GetLightPosition() { return m_vPos; }
+	void SetLightDirection(DirectX::XMFLOAT3 dir) { m_vDir = dir; };
+	DirectX::XMFLOAT3 GetLightDirection() { return m_vDir; }
 
-	DirectX::XMFLOAT3	m_vPos;
+	DirectX::XMFLOAT3	m_vDir;
 };
 

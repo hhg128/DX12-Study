@@ -23,7 +23,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	m_nWindowHeight = screenHeight;
 
 	m_pLight = new CLight;
-	m_pLight->SetLightPosition(XMFLOAT3(1.f, 1.f, 1.f));
+	m_pLight->SetLightDirection(XMFLOAT3(1.f, 0.f, 0.f));
 
 
 	CreateFactory();
@@ -805,7 +805,7 @@ void D3DClass::OnCamera(float fDelta)
 	
 	XMStoreFloat4x4(&constantBuffer.view, XMMatrixTranspose(lookMat));
 	XMStoreFloat4x4(&constantBuffer.proj, XMMatrixTranspose(projMat));
-	constantBuffer.lightPos = m_pLight->GetLightPosition();
+	constantBuffer.lightDir = m_pLight->GetLightDirection();
 
 	PassCB->CopyData(0, constantBuffer);
 }

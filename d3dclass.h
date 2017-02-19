@@ -30,7 +30,7 @@ struct ConstantBuffer
 {
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 proj;
-	XMFLOAT3 lightPos;
+	XMFLOAT3 lightDir;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
