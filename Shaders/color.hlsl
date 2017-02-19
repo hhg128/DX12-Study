@@ -8,6 +8,7 @@ struct VS_INPUT
 {
 	float3 pos : POSITION;
 	float2 mTexCoord: TEXCOORD0;
+	float3 normal : normal;
 };
 
 struct VS_OUTPUT

@@ -64,14 +64,8 @@ void CResourceManager::Load(std::string fbxFileName)
 	// Import the contents of the file into the scene.
 	pImporter->Import(pScene);
 
-	// Convert Axis System to what is used in this example, if needed
-	//FbxAxisSystem SceneAxisSystem = pScene->GetGlobalSettings().GetAxisSystem();
-	//FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
-	//if (SceneAxisSystem != OurAxisSystem)
-	//{
-	//	OurAxisSystem.ConvertScene(pScene);
-	//}
-
+	// 지금은 필요없다.
+	//ConvertAxisSystem(pScene);
 
 	ModelClass* modelClass = new ModelClass;
 	m_ModelMap[fbxFileName] = modelClass;
@@ -81,9 +75,9 @@ void CResourceManager::Load(std::string fbxFileName)
 
 	// Mesh 구하기
 	const int nNodeCount = pScene->GetSrcObjectCount<FbxNode>();
-	for (int nIndex = 0; nIndex < nNodeCount; nIndex++)
+	for (int nNodeIndex = 0; nNodeIndex < nNodeCount; nNodeIndex++)
 	{
-		FbxNode* pNode = pScene->GetSrcObject<FbxNode>(nIndex);
+		FbxNode* pNode = pScene->GetSrcObject<FbxNode>(nNodeIndex);
 		if (pNode->GetNodeAttribute() && pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
 			FbxMesh* pMesh = pNode->GetMesh();
@@ -98,6 +92,8 @@ void CResourceManager::Load(std::string fbxFileName)
 			ReadUV(pMesh, nTriangleCount, meshClass);
 
 			ReadTextureId(pMesh, meshClass);
+
+			ReadNormal(pMesh, nControlPointCount, meshClass);
 
 			m_ModelMap[fbxFileName]->m_MeshArray.push_back(meshClass);
 		}
@@ -228,14 +224,122 @@ void CResourceManager::ReadIndex(FbxMesh* pMesh, size_t nTriangleCount, MeshClas
 	}
 }
 
-void CResourceManager::ReadNormal()
+void CResourceManager::ReadTexture()
 {
 
 }
 
-void CResourceManager::ReadTexture()
+void CResourceManager::ReadNormal(FbxMesh* pMesh, size_t nControlPointCount, MeshClass* meshClass)
 {
+	if (pMesh->GetElementNormalCount() < 1)
+	{
+		throw std::exception("Invalid Normal Number");
 
+		StringHelper::OutputDebugString("Invalid Normal Number");
+	}
+
+	FbxGeometryElementNormal* vertexNormal = pMesh->GetElementNormal(0);
+	switch (vertexNormal->GetMappingMode())
+	{
+	case FbxGeometryElement::eByControlPoint:
+		ReadNormalPerControlPoint(pMesh, nControlPointCount, meshClass);
+		break;
+	case FbxGeometryElement::eByPolygonVertex:
+		ReadNormalPerPolygonVertex(pMesh, nControlPointCount, meshClass);
+		break;
+	}
+}
+
+void CResourceManager::ReadNormalPerControlPoint(FbxMesh* pMesh, int nControlPointCount, MeshClass* meshClass)
+{
+	FbxGeometryElementNormal* vertexNormal = pMesh->GetElementNormal(0);
+	int nFaceCount = pMesh->GetPolygonCount();
+
+	for (size_t i = 0; i < nFaceCount; ++i)
+	{
+		for (size_t j = 0; j < 3; ++j)
+		{
+			int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
+			MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
+
+			XMFLOAT3 outNormal;
+			switch (vertexNormal->GetMappingMode())
+			{
+			case FbxGeometryElement::eByControlPoint:
+				switch (vertexNormal->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+				{
+					outNormal.x = static_cast<float>(vertexNormal->GetDirectArray().GetAt(ctrlPointIndex).mData[0]);
+					outNormal.y = static_cast<float>(vertexNormal->GetDirectArray().GetAt(ctrlPointIndex).mData[2]);
+					outNormal.z = static_cast<float>(vertexNormal->GetDirectArray().GetAt(ctrlPointIndex).mData[1]);
+				}
+				break;
+
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					int index = vertexNormal->GetIndexArray().GetAt(ctrlPointIndex);
+					outNormal.x = static_cast<float>(vertexNormal->GetDirectArray().GetAt(index).mData[0]);
+					outNormal.y = static_cast<float>(vertexNormal->GetDirectArray().GetAt(index).mData[2]);
+					outNormal.z = static_cast<float>(vertexNormal->GetDirectArray().GetAt(index).mData[1]);
+				}
+				break;
+
+				default:
+					throw std::exception("Invalid Reference");
+				}
+				break;
+			}
+
+			vertex.Normal = outNormal;
+		}
+	}	
+}
+
+void CResourceManager::ReadNormalPerPolygonVertex(FbxMesh* pMesh, int nControlPointCount, MeshClass* meshClass)
+{
+	FbxGeometryElementNormal* vertexNormal = pMesh->GetElementNormal(0);
+	int nFaceCount = pMesh->GetPolygonCount();
+
+	for (size_t i = 0; i < nFaceCount; ++i)
+	{
+		for (size_t j = 0; j < 3; ++j)
+		{
+			int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
+			MeshClass::VertexType& vertex = meshClass->m_VertexArray[ctrlPointIndex];
+			
+			XMFLOAT3 outNormal;
+			switch (vertexNormal->GetMappingMode())
+			{
+			case FbxGeometryElement::eByPolygonVertex:
+				switch (vertexNormal->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+				{
+					outNormal.x = static_cast<float>(vertexNormal->GetDirectArray().GetAt(ctrlPointIndex).mData[0]);
+					outNormal.y = static_cast<float>(vertexNormal->GetDirectArray().GetAt(ctrlPointIndex).mData[2]);
+					outNormal.z = static_cast<float>(vertexNormal->GetDirectArray().GetAt(ctrlPointIndex).mData[1]);
+				}
+				break;
+
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					int index = vertexNormal->GetIndexArray().GetAt(ctrlPointIndex);
+					outNormal.x = static_cast<float>(vertexNormal->GetDirectArray().GetAt(index).mData[0]);
+					outNormal.y = static_cast<float>(vertexNormal->GetDirectArray().GetAt(index).mData[2]);
+					outNormal.z = static_cast<float>(vertexNormal->GetDirectArray().GetAt(index).mData[1]);
+				}
+				break;
+
+				default:
+					throw std::exception("Invalid Reference");
+				}
+				break;
+			}
+
+			vertex.Normal = outNormal;
+		}
+	}
 }
 
 void CResourceManager::ReadUV(FbxMesh* pMesh, size_t nTriangleCount, MeshClass* meshClass)
@@ -300,5 +404,16 @@ void CResourceManager::ReadUV(FbxMesh* pMesh, size_t nTriangleCount, MeshClass* 
 			vertex.UV.x = outUV.x;
 			vertex.UV.y = 1.f - outUV.y;
 		}
+	}
+}
+
+void CResourceManager::ConvertAxisSystem(FbxScene* pScene)
+{
+	// Convert Axis System to what is used in this example, if needed
+	FbxAxisSystem SceneAxisSystem = pScene->GetGlobalSettings().GetAxisSystem();
+	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
+	if (SceneAxisSystem != OurAxisSystem)
+	{
+		OurAxisSystem.ConvertScene(pScene);
 	}
 }

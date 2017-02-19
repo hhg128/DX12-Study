@@ -13,6 +13,7 @@ public:
 	{
 		XMFLOAT3 Pos;
 		XMFLOAT2 UV;
+		XMFLOAT3 Normal;
 	};
 
 	struct IndexType
