@@ -7,6 +7,7 @@
 #include "systemclass.h"
 #include "ResourceManager.h"
 #include "ModelClass.h"
+#include "Light.h"
 
 D3DClass* gD3dClass = nullptr;
 
@@ -20,6 +21,10 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 
 	m_nWindowWidth = screenWidth;
 	m_nWindowHeight = screenHeight;
+
+	m_pLight = new CLight;
+	m_pLight->SetLightPosition(XMFLOAT3(1.f, 1.f, 1.f));
+
 
 	CreateFactory();
 	CreateDevice();
@@ -800,6 +805,7 @@ void D3DClass::OnCamera(float fDelta)
 	
 	XMStoreFloat4x4(&constantBuffer.view, XMMatrixTranspose(lookMat));
 	XMStoreFloat4x4(&constantBuffer.proj, XMMatrixTranspose(projMat));
+	constantBuffer.lightPos = m_pLight->GetLightPosition();
 
 	PassCB->CopyData(0, constantBuffer);
 }

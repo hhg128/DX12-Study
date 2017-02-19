@@ -11,6 +11,8 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+class CLight;
+
 struct Vertex
 {
 	XMFLOAT3 Pos;
@@ -28,6 +30,7 @@ struct ConstantBuffer
 {
 	XMFLOAT4X4 view;
 	XMFLOAT4X4 proj;
+	XMFLOAT3 lightPos;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -162,6 +165,9 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_srvHeap;
 
 	UINT mCbvSrvDescriptorSize = 0;
+
+	CLight* m_pLight;
+
 };
 
 extern D3DClass* gD3dClass;
