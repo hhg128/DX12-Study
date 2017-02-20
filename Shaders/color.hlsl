@@ -80,5 +80,5 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 	color = saturate(color);
 	color = color * textureColor;
 
-	return color;
+	return textureColor;
 }
