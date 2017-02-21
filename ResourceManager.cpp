@@ -87,6 +87,7 @@ void CResourceManager::Load(std::string fbxFileName)
 			int nTriangleCount = pMesh->GetPolygonCount();
 
 			MeshClass* meshClass = new MeshClass;
+			meshClass->m_pModel = modelClass;
 
 			ReadMatrix(pNode, meshClass);
 			ReadVertex(pMesh, nControlPointCount, meshClass);
@@ -123,6 +124,7 @@ void CResourceManager::ReadTextureInfo(FbxScene* pScene, ModelClass* modelClass)
 		Tex->Name = textureInternalName;
 
 		modelClass->m_TextureMap[i] = Tex->Filename;
+		modelClass->m_TextureIndexMap[Tex->Filename] = i;
 
 		// 텍스처 매니저에 등록한다.
 		gSystem->TextureManager->m_TextureMap[Tex->Filename] = std::move(Tex);
@@ -156,8 +158,16 @@ void CResourceManager::ReadTextureId(FbxMesh* pMesh, MeshClass* meshClass)
 						std::string textureInternalName = pFileTexture->GetName();
 						int64_t uId = pFileTexture->GetUniqueID();
 
+						size_t pos = textureFileName.rfind("\\");
+						textureFileName = textureFileName.substr(pos + 1);
+
+						std::wstring texWFileName;
+						StringHelper::ConvertStringToWString(textureFileName, texWFileName);
+
+						int texIndex = meshClass->m_pModel->m_TextureIndexMap[texWFileName];
+
 						meshClass->m_TexterIdArray.push_back(uId);
-						meshClass->m_textureIndex = uId;
+						meshClass->m_textureIndex = texIndex;
 					}
 				}
 			}

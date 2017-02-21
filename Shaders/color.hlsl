@@ -31,7 +31,8 @@ cbuffer cb1 : register(b1)
 	uint index;
 };
 
-Texture2D gDiffuseMap[6] : register(t0);
+//Texture2D gDiffuseMap[6] : register(t0);
+Texture2D gDiffuseMap : register(t0);
 
 SamplerState gsamLinearWrap : register(s0);
 
@@ -66,7 +67,7 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 	float3 lightDir;
 	float lightIntensity;
 
-	textureColor = gDiffuseMap[index].Sample(gsamLinearWrap, input.mTexCoord);
+	textureColor = gDiffuseMap.Sample(gsamLinearWrap, input.mTexCoord);
 
 	color = ambientColor;
 	lightDir = -lightDirection;

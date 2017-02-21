@@ -33,6 +33,8 @@ public:
 	INT64 m_textureIndex = 0;
 
 	std::vector<int64_t> m_TexterIdArray;
+
+	ModelClass*		m_pModel = nullptr;
 };
 
 class ModelClass
@@ -47,6 +49,7 @@ public:
 	std::vector<MeshClass*>		m_MeshArray;
 
 	std::unordered_map<int, std::wstring> m_TextureMap;
+	std::unordered_map<std::wstring, int> m_TextureIndexMap;
 	
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 };

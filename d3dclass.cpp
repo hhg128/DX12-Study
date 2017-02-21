@@ -156,9 +156,9 @@ bool D3DClass::Render()
 	int baseIndexLocation = 0;
 	for (auto& Model : gSystem->ResourceManager->m_ModelMap)
 	{
-		ID3D12DescriptorHeap* descriptorHeaps[] = { Model.second->mSrvDescriptorHeap.Get() };
-		m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-		m_commandList->SetGraphicsRootDescriptorTable(2, Model.second->mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		//ID3D12DescriptorHeap* descriptorHeaps[] = { Model.second->mSrvDescriptorHeap.Get() };
+		//m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+		//m_commandList->SetGraphicsRootDescriptorTable(2, Model.second->mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 		
 		auto& meshArray = Model.second->m_MeshArray;
 		for(size_t i = 0 ; i < meshArray.size(); ++i)
@@ -179,6 +179,15 @@ bool D3DClass::Render()
 
 			auto perObjectCB = PerObjectCB->Resource();
 			m_commandList->SetGraphicsRootConstantBufferView(1, perObjectCB->GetGPUVirtualAddress() + i * objCBByteSize);
+
+			//////////////////////////////////////////////////////////////////////////
+			int CbvSrvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			ID3D12DescriptorHeap* descriptorHeaps[] = { Model.second->mSrvDescriptorHeap.Get() };
+			m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+			CD3DX12_GPU_DESCRIPTOR_HANDLE tex(Model.second->mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+			tex.Offset(mesh->m_textureIndex, CbvSrvDescriptorSize);
+			m_commandList->SetGraphicsRootDescriptorTable(2, tex);
+			//////////////////////////////////////////////////////////////////////////
 
 			m_commandList->DrawIndexedInstanced(triangleCount * 3, 1, baseIndexLocation, baseVertexLocation, 0);
 			baseVertexLocation += vertexCount;
