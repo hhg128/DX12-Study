@@ -72,7 +72,7 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	//gSystem->m_pResourceManager->Load("plane_two_texture.fbx");
 	//gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 	//gSystem->m_pResourceManager->Load("humanoid.fbx");
-	gSystem->m_pResourceManager->Load("BG.fbx");
+	gSystem->ResourceManager->Load("BG.fbx");
 	//gSystem->m_pResourceManager->Load("Cube FBX\\cube_with_texture.fbx");
 
 	return true;
@@ -154,7 +154,7 @@ bool D3DClass::Render()
 
 	int baseVertexLocation = 0;
 	int baseIndexLocation = 0;
-	for (auto& Model : gSystem->m_pResourceManager->m_ModelMap)
+	for (auto& Model : gSystem->ResourceManager->m_ModelMap)
 	{
 		ID3D12DescriptorHeap* descriptorHeaps[] = { Model.second->mSrvDescriptorHeap.Get() };
 		m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -278,7 +278,7 @@ bool D3DClass::BuildGeometry()
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 
-	for (auto& Model : gSystem->m_pResourceManager->m_ModelMap)
+	for (auto& Model : gSystem->ResourceManager->m_ModelMap)
 	{
 		Model.second->LoadTextures();
 	}
@@ -334,7 +334,7 @@ bool D3DClass::CreateVertexBuffer()
 {
 	std::vector<Vertex> VertexVector;
 
-	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
+	for (auto& iter : gSystem->ResourceManager->m_ModelMap)
 	{
 		const auto& meshArray = iter.second->m_MeshArray;
 		for (auto& mesh : meshArray)
@@ -396,7 +396,7 @@ bool D3DClass::CreateIndexBuffer()
 {
 	std::vector<int> copyIndexArray;
 
-	for (auto& iter : gSystem->m_pResourceManager->m_ModelMap)
+	for (auto& iter : gSystem->ResourceManager->m_ModelMap)
 	{
 		const auto& meshArray = iter.second->m_MeshArray;
 		for (auto& mesh : meshArray)

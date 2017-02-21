@@ -11,3 +11,8 @@ CTextureManager::CTextureManager()
 CTextureManager::~CTextureManager()
 {
 }
+
+void CTextureManager::Initialize()
+{
+
+}

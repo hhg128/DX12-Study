@@ -17,6 +17,7 @@
 #include "inputclass.h"
 #include "graphicsclass.h"
 #include "ResourceManager.h"
+#include "TextureManager.h"
 #include "GameTimer.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +52,8 @@ private:
 	GameTimer mTimer;
 
 public:
-	CResourceManager* m_pResourceManager = nullptr;
+	CResourceManager*	ResourceManager = nullptr;
+	CTextureManager*	TextureManager = nullptr;
 };
 
 extern SystemClass* gSystem;

@@ -45,9 +45,13 @@ bool SystemClass::Initialize()
 	// Initialize the input object.
 	m_Input->Initialize();
 
-	m_pResourceManager = new CResourceManager;
-	if (m_pResourceManager)
-		m_pResourceManager->Initialize();
+	TextureManager = new CTextureManager;
+	if (TextureManager)
+		TextureManager->Initialize();
+
+	ResourceManager = new CResourceManager;
+	if (ResourceManager)
+		ResourceManager->Initialize();
 
 	// Create the graphics object.  This object will handle rendering all the graphics for this application.
 	m_Graphics = new GraphicsClass;
@@ -70,11 +74,11 @@ bool SystemClass::Initialize()
 void SystemClass::Shutdown()
 {
 	// Fbx Sdk Á¤¸®
-	if (m_pResourceManager)
+	if (ResourceManager)
 	{
-		m_pResourceManager->Finalize();
-		delete m_pResourceManager;
-		m_pResourceManager = nullptr;
+		ResourceManager->Finalize();
+		delete ResourceManager;
+		ResourceManager = nullptr;
 	}
 
 	// Release the graphics object.

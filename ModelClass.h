@@ -46,7 +46,7 @@ public:
 public:
 	std::vector<MeshClass*>		m_MeshArray;
 
-	std::unordered_map<int64_t, std::unique_ptr<Texture>> m_TextureMap;
+	std::unordered_map<int, std::wstring> m_TextureMap;
 	
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 };

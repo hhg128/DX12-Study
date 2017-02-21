@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#include "systemclass.h"
 #include "ResourceManager.h"
+#include "TextureManager.h"
 #include "ModelClass.h"
 
 CResourceManager::CResourceManager()
@@ -102,6 +104,31 @@ void CResourceManager::Load(std::string fbxFileName)
 	modelClass->LoadTextures();
 }
 
+void CResourceManager::ReadTextureInfo(FbxScene* pScene, ModelClass* modelClass)
+{
+	const int nTextureCount = pScene->GetTextureCount();
+	for (int i = 0; i < nTextureCount; ++i)
+	{
+		FbxTexture* pTexture = pScene->GetTexture(i);
+		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
+		std::string textureFileName = pFileTexture->GetFileName();
+		std::string textureInternalName = pFileTexture->GetName();
+		int64_t uId = pFileTexture->GetUniqueID();
+
+		size_t pos = textureFileName.rfind("\\");
+		textureFileName = textureFileName.substr(pos + 1);
+
+		auto Tex = std::make_unique<Texture>();
+		StringHelper::ConvertStringToWString(textureFileName, Tex->Filename);
+		Tex->Name = textureInternalName;
+
+		modelClass->m_TextureMap[i] = Tex->Filename;
+
+		// 텍스처 매니저에 등록한다.
+		gSystem->TextureManager->m_TextureMap[Tex->Filename] = std::move(Tex);
+	}
+}
+
 void CResourceManager::ReadTextureId(FbxMesh* pMesh, MeshClass* meshClass)
 {
 	// texture id
@@ -135,28 +162,6 @@ void CResourceManager::ReadTextureId(FbxMesh* pMesh, MeshClass* meshClass)
 				}
 			}
 		}
-	}
-}
-
-void CResourceManager::ReadTextureInfo(FbxScene* pScene, ModelClass* modelClass)
-{
-	const int nTextureCount = pScene->GetTextureCount();
-	for (int i = 0; i < nTextureCount; ++i)
-	{
-		FbxTexture* pTexture = pScene->GetTexture(i);
-		FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pTexture);
-		std::string textureFileName = pFileTexture->GetFileName();
-		std::string textureInternalName = pFileTexture->GetName();
-		int64_t uId = pFileTexture->GetUniqueID();
-
-		size_t pos = textureFileName.rfind("\\");
-		textureFileName = textureFileName.substr(pos + 1);
-
-		auto Tex = std::make_unique<Texture>();
-		StringHelper::ConvertStringToWString(textureFileName, Tex->Filename);
-		Tex->Name = textureInternalName;
-
-		modelClass->m_TextureMap[uId] = std::move(Tex);
 	}
 }
 

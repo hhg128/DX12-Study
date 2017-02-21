@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "systemclass.h"
+#include "TextureManager.h"
 #include "ModelClass.h"
 #include "d3dclass.h"
 
@@ -35,21 +37,22 @@ void ModelClass::LoadTextures()
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-	for (auto& texture : m_TextureMap)
+	for (auto& textureName : m_TextureMap)
 	{
+		auto& texture = gSystem->TextureManager->m_TextureMap[textureName.second];
 		std::string textureFileName;
-		StringHelper::ConvertWStringToString(texture.second->Filename, textureFileName);
+		StringHelper::ConvertWStringToString(texture->Filename, textureFileName);
 
-		AssertIfFailed(DirectX::CreateDDSTextureFromFile12(gD3dClass->m_device.Get(), gD3dClass->m_commandList.Get(), texture.second->Filename.c_str(), texture.second->Resource, texture.second->UploadHeap));
+		AssertIfFailed(DirectX::CreateDDSTextureFromFile12(gD3dClass->m_device.Get(), gD3dClass->m_commandList.Get(), texture->Filename.c_str(), texture->Resource, texture->UploadHeap));
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = texture.second->Resource->GetDesc().Format;
+		srvDesc.Format = texture->Resource->GetDesc().Format;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MostDetailedMip = 0;
-		srvDesc.Texture2D.MipLevels = texture.second->Resource->GetDesc().MipLevels;
+		srvDesc.Texture2D.MipLevels = texture->Resource->GetDesc().MipLevels;
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-		gD3dClass->m_device->CreateShaderResourceView(texture.second->Resource.Get(), &srvDesc, hDescriptor);
+		gD3dClass->m_device->CreateShaderResourceView(texture->Resource.Get(), &srvDesc, hDescriptor);
 
 		hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 	}

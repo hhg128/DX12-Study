@@ -1,13 +1,13 @@
 #pragma once
 
-class CTexture;
-
 class CTextureManager
 {
 public:
 	CTextureManager();
 	~CTextureManager();
 
-	std::unordered_map<std::wstring, CTexture*>		m_TextureMap;
+	void Initialize();
+
+	std::unordered_map<std::wstring, std::unique_ptr<Texture>>		m_TextureMap;
 };
 
