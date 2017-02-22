@@ -33,6 +33,8 @@
 #include <Shlwapi.h>
 #include <chrono>
 
+#include <wincodec.h>
+
 //////////////
 // INCLUDES //
 //////////////

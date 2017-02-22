@@ -366,7 +366,7 @@ void CResourceManager::ReadUV(FbxMesh* pMesh, size_t nTriangleCount, MeshClass* 
 		{
 			int ctrlPointIndex = pMesh->GetPolygonVertex(i, j);
 
-			XMFLOAT2 outUV;
+			XMFLOAT2 outUV(0.f, 0.f);
 			FbxGeometryElementUV* vertexUV = pMesh->GetElementUV(0);
 			if (vertexUV)
 			{
