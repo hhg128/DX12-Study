@@ -9,7 +9,7 @@ public:
 	void Initialize();
 
 	void	LoadTextureFromFile(std::wstring fileName);
-	int		LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC& resourceDescription, LPCWSTR filename, int &bytesPerRow);
+	int		LoadImageDataFromFile(BYTE** imageData, D3D12_RESOURCE_DESC& resourceDescription, std::wstring filename, int &bytesPerRow);
 
 	int		GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 	DXGI_FORMAT GetDXGIFormatFromWICFormat(WICPixelFormatGUID& wicFormatGUID);
