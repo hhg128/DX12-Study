@@ -34,6 +34,9 @@ void CTextureManager::LoadTextureFromFile(std::wstring fileName)
 	BYTE* imageData;
 	int imageSize = LoadImageDataFromFile(&imageData, textureDesc, fileName, imageBytesPerRow);
 
+	if (imageSize <= 0)
+		return;
+
 	auto& textureItem = m_TextureMap[fileName];
 
 	hr = gD3dClass->m_device->CreateCommittedResource(
