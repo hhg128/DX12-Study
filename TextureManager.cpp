@@ -20,6 +20,13 @@ void CTextureManager::Initialize()
 
 void CTextureManager::LoadTextureFromFile(std::wstring fileName)
 {
+	auto search = m_TextureMap.find(fileName);
+	if (search != m_TextureMap.end())
+	{
+		// 이미 로딩 되어 있는 텍스처에 대해서는 넘어간다
+		//return;
+	}
+
 	HRESULT hr;
 
 	D3D12_RESOURCE_DESC textureDesc;
