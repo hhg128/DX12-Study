@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "d3dclass.h"
 #include "TextureManager.h"
 #include "Texture.h"
 
@@ -19,10 +20,48 @@ void CTextureManager::Initialize()
 
 void CTextureManager::LoadTextureFromFile(std::wstring fileName)
 {
+	HRESULT hr;
+
 	D3D12_RESOURCE_DESC textureDesc;
 	int imageBytesPerRow;
 	BYTE* imageData;
 	int imageSize = LoadImageDataFromFile(&imageData, textureDesc, fileName, imageBytesPerRow);
+
+	auto& textureItem = m_TextureMap[fileName];
+
+	hr = gD3dClass->m_device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&textureItem->Resource)
+	);
+
+	const UINT num2DSubresources = textureDesc.DepthOrArraySize * textureDesc.MipLevels;
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(textureItem->Resource.Get(), 0, num2DSubresources);
+
+	hr = gD3dClass->m_device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&textureItem->UploadHeap));
+
+	D3D12_SUBRESOURCE_DATA initData = {};
+	initData.pData = &imageData[0];
+	initData.RowPitch = imageBytesPerRow;
+	initData.SlicePitch = imageBytesPerRow * textureDesc.Height;
+
+	gD3dClass->m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureItem->Resource.Get(),
+		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
+
+	// Use Heap-allocating UpdateSubresources implementation for variable number of subresources (which is the case for textures).
+	UpdateSubresources(gD3dClass->m_commandList.Get(), textureItem->Resource.Get(), textureItem->UploadHeap.Get(), 0, 0, num2DSubresources, &initData);
+
+	gD3dClass->m_commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(textureItem->Resource.Get(),
+		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 }
 
 // load and decode image from file
