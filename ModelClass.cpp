@@ -43,8 +43,8 @@ void ModelClass::LoadTextures()
 		std::string textureFileName;
 		StringHelper::ConvertWStringToString(texture->Filename, textureFileName);
 
-		AssertIfFailed(DirectX::CreateDDSTextureFromFile12(gD3dClass->m_device.Get(), gD3dClass->m_commandList.Get(), texture->Filename.c_str(), texture->Resource, texture->UploadHeap));
-		//gSystem->TextureManager->LoadTextureFromFile(textureName.second);
+		//AssertIfFailed(DirectX::CreateDDSTextureFromFile12(gD3dClass->m_device.Get(), gD3dClass->m_commandList.Get(), texture->Filename.c_str(), texture->Resource, texture->UploadHeap));
+		gSystem->TextureManager->LoadTextureFromFile(textureName.second);
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

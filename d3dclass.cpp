@@ -72,7 +72,8 @@ bool D3DClass::Initialize(int screenHeight, int screenWidth, HWND hwnd)
 	//gSystem->m_pResourceManager->Load("plane_two_texture.fbx");
 	//gSystem->m_pResourceManager->Load("cube_size_1.fbx");
 	//gSystem->m_pResourceManager->Load("humanoid.fbx");
-	gSystem->ResourceManager->Load("Model\\Beautiful Girl FBX\\BG.fbx");
+	gSystem->ResourceManager->Load("BG.fbx");
+	//gSystem->ResourceManager->Load("Model\\Beautiful Girl FBX\\BG.fbx");
 	//gSystem->m_pResourceManager->Load("Cube FBX\\cube_with_texture.fbx");
 
 	return true;
