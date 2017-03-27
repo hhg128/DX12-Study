@@ -141,6 +141,8 @@
     <ClCompile Include="d3dclass.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GameObjectManager.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="graphicsclass.cpp" />
     <ClCompile Include="inputclass.cpp" />
@@ -149,6 +151,7 @@
     <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="ModelClass.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="StringHelper.cpp" />
     <ClCompile Include="systemclass.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -161,6 +164,8 @@
     <ClInclude Include="d3dUtil.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GameObjectManager.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="graphicsclass.h" />
     <ClInclude Include="inputclass.h" />
@@ -168,6 +173,7 @@
     <ClInclude Include="MathHelper.h" />
     <ClInclude Include="ModelClass.h" />
     <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StringHelper.h" />
     <ClInclude Include="systemclass.h" />
