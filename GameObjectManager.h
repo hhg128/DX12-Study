@@ -19,6 +19,8 @@ public:
 	GameObjectManager();
 	~GameObjectManager();
 
+	void Initialize();
+
 	// Create GameObject and return GameObject's pointer.
 	// if failed to create GameObject, return nullptr
 	GameObject* CreateGameObject();

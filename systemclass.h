@@ -18,6 +18,7 @@
 #include "graphicsclass.h"
 #include "ResourceManager.h"
 #include "TextureManager.h"
+#include "GameObjectManager.h"
 #include "GameTimer.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +55,7 @@ private:
 public:
 	CResourceManager*	ResourceManager = nullptr;
 	CTextureManager*	TextureManager = nullptr;
+	GameObjectManager*	ObjectManager = nullptr;
 };
 
 extern SystemClass* gSystem;

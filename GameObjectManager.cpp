@@ -13,14 +13,21 @@ GameObjectManager::~GameObjectManager()
 {
 }
 
+void GameObjectManager::Initialize()
+{
+
+}
+
 GameObject* GameObjectManager::CreateGameObject()
 {
 	GameObject* pNewGameObject = new GameObject;
 	if (pNewGameObject)
 	{
-		pNewGameObject->Initialize();
+		int newId = GameObjectIdGenerator::GetNewId();
 
-		m_ObjectMap.insert(std::pair<INT, GameObject*>(GameObjectIdGenerator::GetNewId(), pNewGameObject));
+		pNewGameObject->Initialize(newId);
+
+		m_ObjectMap.insert(std::pair<INT, GameObject*>(newId, pNewGameObject));
 
 		return pNewGameObject;
 	}

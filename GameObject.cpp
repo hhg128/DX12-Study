@@ -10,7 +10,7 @@ GameObject::~GameObject()
 {
 }
 
-void GameObject::Initialize()
+void GameObject::Initialize(int objectId)
 {
-
+	m_ojbectId = objectId;
 }

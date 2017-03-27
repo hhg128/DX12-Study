@@ -6,6 +6,9 @@ public:
 	GameObject();
 	virtual ~GameObject();
 
-	void Initialize();
+	void Initialize(int objectId);
+
+private:
+	int m_ojbectId;
 };
 

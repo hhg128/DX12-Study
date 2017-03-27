@@ -67,6 +67,10 @@ bool SystemClass::Initialize()
 		return false;
 	}
 
+	ObjectManager = new GameObjectManager;
+	if (ObjectManager)
+		ObjectManager->Initialize();
+
 	return true;
 }
 
