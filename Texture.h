@@ -9,5 +9,7 @@ public:
 	bool LoadFromDDSFile(std::wstring fileName);
 
 	std::wstring	m_TextureFileName;
+
+	std::wstring	m_TextureFileName_copy;
 };
 
