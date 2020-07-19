@@ -14,5 +14,6 @@ private:
 	int GameObjectID = 0;
 
 	int First = 0;
+	int Second = 0;
 };
 
