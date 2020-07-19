@@ -11,5 +11,8 @@ public:
 	std::wstring	m_TextureFileName;
 
 	std::wstring	m_TextureFileName_copy;
+
+
+	int first;
 };
 
