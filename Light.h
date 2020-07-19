@@ -10,5 +10,8 @@ public:
 	DirectX::XMFLOAT3 GetLightDirection() { return m_vDir; }
 
 	DirectX::XMFLOAT3	m_vDir;
+
+	DirectX::XMFLOAT3	m_vDirection;
+
 };
 
