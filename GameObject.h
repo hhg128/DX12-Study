@@ -12,5 +12,7 @@ private:
 	int m_ojbectId;
 
 	int GameObjectID = 0;
+
+	int First = 0;
 };
 
