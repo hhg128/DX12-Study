@@ -16,5 +16,7 @@ public:
 	int first;
 	int second;
 	int third;
+
+	// 1
 };
 
