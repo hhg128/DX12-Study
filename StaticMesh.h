@@ -6,6 +6,9 @@ public:
 	StaticMesh();
 	~StaticMesh();
 
-	int MeshID = 0
+	int MeshID = 0;
+
+
+	// 1
 };
 
