@@ -14,5 +14,6 @@ public:
 
 
 	int first;
+	int second;
 };
 
