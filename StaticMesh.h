@@ -5,5 +5,7 @@ class StaticMesh
 public:
 	StaticMesh();
 	~StaticMesh();
+
+	int MeshID = 0
 };
 
