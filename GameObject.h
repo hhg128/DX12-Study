@@ -16,5 +16,6 @@ private:
 	int First = 0;
 	int Second = 0;
 	int Third = 0;
+	int Forth = 0;
 };
 
