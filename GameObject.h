@@ -10,5 +10,7 @@ public:
 
 private:
 	int m_ojbectId;
+
+	int GameObjectID = 0;
 };
 
